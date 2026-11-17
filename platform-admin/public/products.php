@@ -1,7 +1,7 @@
 <?php
 require dirname(__DIR__) . '/src/bootstrap.php';
 require dirname(__DIR__) . '/src/layout.php';
-require_admin();
+require_roles(['owner','administrator','content']);
 
 $error = '';
 $notice = '';
