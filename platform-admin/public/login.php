@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = (string)($_POST['password'] ?? '');
     $ipHash = hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? ''));
     $emailHash = hash('sha256', $email);
-    $stmt = db()->prepare('SELECT COUNT(*) AS attempts FROM admin_login_attempts WHERE (email_hash=? OR ip_hash=?) AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)');
+    $stmt = db()->prepare('SELECT COUNT(*) AS attempts FROM admin_login_attempts WHERE was_successful=0 AND (email_hash=? OR ip_hash=?) AND attempted_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)');
     $stmt->bind_param('ss', $emailHash, $ipHash);
     $stmt->execute();
     $attempts = (int)$stmt->get_result()->fetch_assoc()['attempts'];
