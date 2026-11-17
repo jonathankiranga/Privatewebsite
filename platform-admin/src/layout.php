@@ -20,12 +20,13 @@ function page_header(string $title): void
 <div class="brand">SmartNow <span style="color:#8ea9ff">/ Admin</span></div>
 <?php if ($admin): ?>
 <a href="index.php">Overview</a>
-<?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="products.php">Products</a><?php endif; ?>
+<?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="products.php">Products</a><a href="plans.php">Plans</a><?php endif; ?>
+<?php if (in_array($admin['role'] ?? '', ['owner','administrator'], true)): ?><a href="enquiries.php">Plan enquiries</a><?php endif; ?>
 <?php if (($admin['role'] ?? '') === 'owner'): ?><a href="administrators.php">Administrators</a><?php endif; ?>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator','support'], true)): ?><a href="customers.php">Customers</a><a href="tickets.php">Support tickets</a><?php endif; ?>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="knowledge-base.php">Knowledge base</a><?php endif; ?>
 <div class="muted">Not yet available</div>
-<span style="font-size:12px;color:#8292ad;padding:0 12px">Subscriptions · Payments · Analytics</span>
+<span style="font-size:12px;color:#8292ad;padding:0 12px">Payments · Analytics</span>
 <?php endif; ?>
 </aside>
 <section class="main">
