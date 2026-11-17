@@ -10,6 +10,11 @@ if (PHP_SAPI !== 'cli' && !$isHttps) {
     http_response_code(400);
     exit('HTTPS is required.');
 }
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_name('SMARTNOW_CUSTOMER');
     session_set_cookie_params([
