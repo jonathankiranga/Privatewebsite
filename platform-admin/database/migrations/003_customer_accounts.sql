@@ -19,3 +19,14 @@ CREATE TABLE platform_customer_accounts (
   CONSTRAINT fk_customer_account_customer FOREIGN KEY (customer_id)
     REFERENCES platform_customers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE platform_customer_login_attempts (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email_hash CHAR(64) NOT NULL,
+  ip_hash CHAR(64) NOT NULL,
+  attempted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  was_successful TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_customer_login_email_time (email_hash, attempted_at),
+  KEY idx_customer_login_ip_time (ip_hash, attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
