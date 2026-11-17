@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     audit_event('kb_article.updated', 'kb_article', $id, ['status'=>$status]);
                 } else {
                     $stmt = db()->prepare("INSERT INTO platform_kb_articles (slug,title,summary,category,body,status,created_by_admin_id,updated_by_admin_id,published_at) VALUES (?,?,?,?,?,?,?,?,IF(?='published',NOW(),NULL))");
-                    $stmt->bind_param('ssssssiii', $slug, $title, $summary, $category, $body, $status, $adminId, $adminId, $status);
+                    $stmt->bind_param('ssssssiis', $slug, $title, $summary, $category, $body, $status, $adminId, $adminId, $status);
                     $stmt->execute();
                     $id = (int)db()->insert_id;
                     audit_event('kb_article.created', 'kb_article', $id, ['status'=>$status]);
