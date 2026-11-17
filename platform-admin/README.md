@@ -37,6 +37,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - CSRF-protected login, logout, product, customer and ticket forms.
 - Login throttling by account and IP using the database; only failed attempts count towards the threshold.
 - CLI cleanup of authentication-attempt records older than 30 days (`php bin/cleanup-auth-attempts.php`); schedule it daily or weekly.
+- CLI cleanup of visitor events older than 180 days and public-form rate-limit records older than 30 days (`php bin/cleanup-visitor-analytics.php`); schedule it daily or weekly.
 - First-admin creation via CLI only.
 - Audit records for authentication and product/customer/support actions.
 - Owner-only administrator management (create accounts, activate/deactivate access, and protect the last active owner).
@@ -69,7 +70,7 @@ Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer applic
 - Review access logs and audit events.
 - Before production, configure a reverse proxy/web server to deny access to all paths outside `public/`.
 - Apply the SQL migrations exactly once and in numeric order to the database. Back up the database first.
-- Schedule `php bin/cleanup-auth-attempts.php` through the hosting cron facility.
+- Schedule `php bin/cleanup-auth-attempts.php` and `php bin/cleanup-visitor-analytics.php` through the hosting cron facility.
 
 
 ## Administrator roles
