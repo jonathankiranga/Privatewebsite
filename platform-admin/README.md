@@ -13,7 +13,8 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 2. Import `database/schema.sql`.
 3. Run the one-time migration `database/migrations/002_customer_support_workflows.sql` against that database. It adds customer contact fields, ticket classification and descriptions, assignment, and ticket conversation history.
 4. Run the one-time migration `database/migrations/003_customer_accounts.sql`. It creates the separate customer authentication and login-throttling tables.
-5. Run the one-time migration `database/migrations/004_knowledge_base.sql`. It creates the published help-article store. Back up the database before applying migrations.
+5. Run the one-time migration `database/migrations/004_knowledge_base.sql`. It creates the published help-article store.
+6. Run the one-time migration `database/migrations/005_subscription_enquiries.sql`. It creates the plan catalogue and customer enquiry workflow; it does not create paid subscriptions. Back up the database before applying migrations.
 5. Set environment variables in the hosting control panel:
    - `SMARTNOW_DB_HOST`
    - `SMARTNOW_DB_NAME`
@@ -23,10 +24,10 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
    - `SMARTNOW_MAIL_FROM` (a valid sender address configured on the hosting account)
    - `SMARTNOW_SUPPORT_EMAIL` (the support-team inbox for new customer requests and replies)
    - `SMARTNOW_CUSTOMER_PORTAL_URL` (for example `https://cpanel.smarternowhosting.co.ke`; must be HTTPS and point to this app's public directory)
-7. From the project root, create the first administrator using the CLI:
+8. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-8. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+9. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication.
@@ -42,6 +43,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Customer account dashboard and profile management, including contact details and password changes; product licensing and subscriptions are explicitly shown as not yet active.
 - Customer-facing support requests, bug reports, feature suggestions and replies; internal administrator notes are excluded from customer-visible history.
 - Knowledge base CMS with draft, published and archived articles, plus a public searchable help centre. Article content is escaped plain text; scripts and HTML are not executed.
+- Subscription plan catalogue with administrator-entered pricing and terms, plus customer plan enquiries and an administrator sales pipeline. Enquiries do not create subscriptions or grant access.
 - Email notifications to the configured support inbox for new customer requests and replies, and to customers for public administrator replies and status changes.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
@@ -52,7 +54,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting, referral tracking, and visitor analytics are not working features yet. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting, referral tracking, and visitor analytics are not working features yet. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
 
 ## Security / operations
 - Keep credentials in hosting environment variables, never in Git.
@@ -70,7 +72,7 @@ Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer a
 - `owner`: full access to the currently implemented administration areas.
 - `administrator`: product, customer and support management.
 - `support`: read-only customer directory and support-ticket management; cannot change customer records or manage products.
-- `content`: product catalogue and knowledge base management.
+- `content`: product catalogue, subscription plan and knowledge base management.
 
 Role checks are enforced server-side; hiding navigation links is not the security boundary. New administrator roles can be selected when creating an account; changing an existing administrator's role is not yet supported in the interface.
 
