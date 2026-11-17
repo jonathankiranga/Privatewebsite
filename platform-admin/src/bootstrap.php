@@ -82,10 +82,31 @@ function current_admin(): ?array
 
 function require_admin(): void
 {
-    if (!current_admin()) {
+    $sessionAdmin = current_admin();
+    if (!$sessionAdmin || empty($sessionAdmin['id'])) {
         header('Location: login.php');
         exit;
     }
+
+    $stmt = db()->prepare('SELECT id,email,display_name,role,is_active FROM admin_users WHERE id=? LIMIT 1');
+    $adminId = (int)$sessionAdmin['id'];
+    $stmt->bind_param('i', $adminId);
+    $stmt->execute();
+    $freshAdmin = $stmt->get_result()->fetch_assoc();
+
+    if (!$freshAdmin || (int)$freshAdmin['is_active'] !== 1) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: login.php');
+        exit;
+    }
+
+    $_SESSION['admin'] = [
+        'id' => (int)$freshAdmin['id'],
+        'email' => $freshAdmin['email'],
+        'display_name' => $freshAdmin['display_name'],
+        'role' => $freshAdmin['role']
+    ];
 }
 
 function require_roles(array $roles): void
