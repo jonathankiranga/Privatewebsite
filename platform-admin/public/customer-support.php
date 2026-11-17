@@ -11,8 +11,8 @@ function notify_support_team(int $ticketId, string $subject, string $message, st
         error_log('Support team notification skipped: mail configuration is incomplete.');
         return;
     }
-    $body = "A customer has updated support request #".$ticketId." - ".$subject."\\n\\nCustomer: ".$customerEmail."\\n\\n".$message."\\n\\nOpen the request in the administration area:\\n".$base.'/tickets.php?ticket='.$ticketId."\\n";
-    $headers = "From: SmartNow Support <".$from.">\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+    $body = "A customer has updated support request #".$ticketId." - ".$subject."\n\nCustomer: ".$customerEmail."\n\n".$message."\n\nOpen the request in the administration area:\n".$base.'/tickets.php?ticket='.$ticketId."\n";
+    $headers = "From: SmartNow Support <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
     if (!mail($to, '=?UTF-8?B?'.base64_encode('Support request #'.$ticketId).'?=', $body, $headers)) {
         error_log('Support team notification email could not be sent for ticket #'.$ticketId);
     }
