@@ -35,8 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $to = trim((string)getenv('SMARTNOW_SUPPORT_EMAIL'));
             $base = rtrim((string)getenv('SMARTNOW_CUSTOMER_PORTAL_URL'), '/');
             if (filter_var($from, FILTER_VALIDATE_EMAIL) && filter_var($to, FILTER_VALIDATE_EMAIL) && filter_var($base, FILTER_VALIDATE_URL) && strtolower((string)parse_url($base, PHP_URL_SCHEME)) === 'https') {
-                $body = "A customer has requested plan information.\\n\\nEnquiry #".$enquiryId."\\nCustomer: ".$customer['email']."\\nPlan: ".$plan['name']."\\nMessage: ".$message."\\n\\nReview it in the administration area:\\n".$base.'/enquiries.php';
-                $headers = "From: SmartNow Support <".$from.">\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+                $body = "A customer has requested plan information.\n\nEnquiry #".$enquiryId."\nCustomer: ".$customer['email']."\nPlan: ".$plan['name']."\nMessage: ".$message."\n\nReview it in the administration area:\n".$base.'/enquiries.php';
+                $headers = "From: SmartNow Support <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
                 if (!mail($to, '=?UTF-8?B?'.base64_encode('SmartNow plan enquiry #'.$enquiryId).'?=', $body, $headers)) error_log('Plan enquiry notification failed for #'.$enquiryId);
             }
             customer_redirect('customer-plans.php?requested=1');
