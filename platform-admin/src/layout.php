@@ -21,8 +21,10 @@ function page_header(string $title): void
 <?php if ($admin): ?>
 <a href="index.php">Overview</a>
 <a href="products.php">Products</a>
-<div class="muted">Coming after verification</div>
-<span style="font-size:12px;color:#8292ad;padding:0 12px">Customers · Billing · Support · Analytics</span>
+<a href="customers.php">Customers</a>
+<a href="tickets.php">Support tickets</a>
+<div class="muted">Not yet available</div>
+<span style="font-size:12px;color:#8292ad;padding:0 12px">Subscriptions · Payments · Analytics · Knowledge base</span>
 <?php endif; ?>
 </aside>
 <section class="main">
