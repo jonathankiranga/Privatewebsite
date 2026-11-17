@@ -88,6 +88,28 @@ function require_admin(): void
     }
 }
 
+function require_roles(array $roles): void
+{
+    require_admin();
+    $admin = current_admin();
+    if (!$admin || !in_array((string)($admin['role'] ?? ''), $roles, true)) {
+        http_response_code(403);
+        exit('You do not have permission to access this area.');
+    }
+}
+
+function require_write_roles(array $roles): void
+{
+    require_roles($roles);
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['edit'])) {
+        $admin = current_admin();
+        if (!$admin || !in_array((string)($admin['role'] ?? ''), $roles, true)) {
+            http_response_code(403);
+            exit('You do not have permission to edit these records.');
+        }
+    }
+}
+
 function audit_event(string $event, ?string $entityType = null, ?int $entityId = null, array $details = []): void
 {
     $admin = current_admin();
