@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $db->prepare('INSERT INTO platform_ticket_messages (ticket_id,author_type,message,is_internal) VALUES (?,?,?,?)');
                     $stmt->bind_param('issi', $ticketId, $authorType, $message, $internal);
                     $stmt->execute();
-                    $stmt = $db->prepare("UPDATE platform_support_tickets SET status=IF(status='waiting_customer','open',status) WHERE id=? AND customer_id=?");
+                    $stmt = $db->prepare("UPDATE platform_support_tickets SET status=IF(status IN ('waiting_customer','resolved','closed'),'open',status) WHERE id=? AND customer_id=?");
                     $stmt->bind_param('ii', $ticketId, $customerId);
                     $stmt->execute();
                     $db->commit();
