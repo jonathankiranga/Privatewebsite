@@ -1,11 +1,12 @@
 <?php
 require dirname(__DIR__) . '/src/bootstrap.php';
 require dirname(__DIR__) . '/src/layout.php';
-require_admin();
+require_roles(['owner','administrator','support']);
 
 $error = '';
 $notice = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_roles(['owner','administrator']);
     verify_csrf();
     $action = (string)($_POST['action'] ?? '');
     $id = (int)($_POST['id'] ?? 0);
