@@ -1,0 +1,10 @@
+<?php
+require dirname(__DIR__) . '/src/customer-bootstrap.php';
+$slug = trim((string)($_GET['slug'] ?? ''));
+$stmt = customer_db()->prepare("SELECT title,summary,category,body,published_at,updated_at FROM platform_kb_articles WHERE slug=? AND status='published' LIMIT 1");
+$stmt->bind_param('s', $slug);
+$stmt->execute();
+$article = $stmt->get_result()->fetch_assoc();
+if (!$article) { http_response_code(404); }
+?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?= $article ? customer_e($article['title']).' · SmartNow Help' : 'Article not found · SmartNow Help' ?></title><?php if ($article): ?><meta name="description" content="<?= customer_e($article['summary']) ?>"><link rel="canonical" href="https://smarternowhosting.co.ke/article.php?slug=<?= rawurlencode($slug) ?>"><?php endif; ?><style>*{box-sizing:border-box}body{margin:0;background:#f4f6fa;color:#172033;font-family:Inter,system-ui,sans-serif}.wrap{max-width:850px;margin:5vh auto;padding:20px}.panel{background:white;border:1px solid #e5e9f0;border-radius:15px;padding:30px}.nav{margin-bottom:18px}.nav a{color:#2864e8}.category{color:#2864e8;font-size:12px;text-transform:uppercase;letter-spacing:.1em;font-weight:800}.summary{font-size:18px;color:#64748b}.body{white-space:pre-wrap;line-height:1.8;margin-top:28px}.updated{font-size:12px;color:#64748b;margin-top:28px}@media(max-width:600px){.wrap{padding:12px}.panel{padding:20px}}</style></head><body><div class="wrap"><div class="nav"><a href="help.php">← Help centre</a></div><article class="panel"><?php if ($article): ?><span class="category"><?= customer_e($article['category']) ?></span><h1><?= customer_e($article['title']) ?></h1><p class="summary"><?= customer_e($article['summary']) ?></p><div class="body"><?= customer_e($article['body']) ?></div><div class="updated">Last updated: <?= customer_e($article['updated_at']) ?></div><?php else: ?><h1>Article not found</h1><p>This article is unavailable or has not been published.</p><a href="help.php">Return to the help centre</a><?php endif; ?></article></div></body></html>
