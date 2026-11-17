@@ -15,21 +15,24 @@ if ($count > 0) {
     fwrite(STDERR, "An administrator already exists. Create additional administrators through a separately authorised workflow.\n");
     exit(1);
 }
-if (!function_exists('readline')) {
-    fwrite(STDERR, "PHP readline extension is required for secure password entry.\n");
-    exit(1);
-}
-$name = trim((string)readline('Administrator display name: '));
+fwrite(STDOUT, 'Administrator display name: ');
+$name = trim((string)fgets(STDIN));
 if ($name === '') {
     fwrite(STDERR, "A display name is required.\n");
     exit(1);
 }
-$password = (string)readline('Password (minimum 14 characters): ');
+fwrite(STDOUT, 'Password (minimum 14 characters): ');
+if (PHP_OS_FAMILY !== 'Windows' && function_exists('shell_exec')) shell_exec('stty -echo');
+$password = trim((string)fgets(STDIN));
+if (PHP_OS_FAMILY !== 'Windows' && function_exists('shell_exec')) { shell_exec('stty echo'); fwrite(STDOUT, "\\n"); }
 if (strlen($password) < 14) {
     fwrite(STDERR, "Password must contain at least 14 characters.\n");
     exit(1);
 }
-$confirm = (string)readline('Confirm password: ');
+fwrite(STDOUT, 'Confirm password: ');
+if (PHP_OS_FAMILY !== 'Windows' && function_exists('shell_exec')) shell_exec('stty -echo');
+$confirm = trim((string)fgets(STDIN));
+if (PHP_OS_FAMILY !== 'Windows' && function_exists('shell_exec')) { shell_exec('stty echo'); fwrite(STDOUT, "\\n"); }
 if (!hash_equals($password, $confirm)) {
     fwrite(STDERR, "Passwords do not match.\n");
     exit(1);
