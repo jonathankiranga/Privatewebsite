@@ -12,16 +12,19 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 1. Create a dedicated empty MySQL database and database user with least-privilege access.
 2. Import `database/schema.sql`.
 3. Run the one-time migration `database/migrations/002_customer_support_workflows.sql` against that database. It adds customer contact fields, ticket classification and descriptions, assignment, and ticket conversation history.
-4. Set environment variables in the hosting control panel:
+4. Run the one-time migration `database/migrations/003_customer_accounts.sql`. It creates the separate customer authentication table. Back up the database before applying migrations.
+5. Set environment variables in the hosting control panel:
    - `SMARTNOW_DB_HOST`
    - `SMARTNOW_DB_NAME`
    - `SMARTNOW_DB_USER`
    - `SMARTNOW_DB_PASS`
    - `SMARTNOW_SESSION_SECURE=1`
-5. From the project root, create the first administrator using the CLI:
+   - `SMARTNOW_MAIL_FROM` (a valid sender address configured on the hosting account)
+   - `SMARTNOW_CUSTOMER_PORTAL_URL` (for example `https://cpanel.smarternowhosting.co.ke`; must be HTTPS and point to this app's public directory)
+6. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-6. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+7. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication.
@@ -31,6 +34,10 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - First-admin creation via CLI only.
 - Audit records for authentication and product/customer/support actions.
 - Owner-only administrator management (create accounts, activate/deactivate access, and protect the last active owner).
+- Customer registration with password hashing and email verification.
+- Customer sign-in, sign-out, verification resend and password reset.
+- Customer account dashboard with explicit notice that product licensing and subscriptions are not yet active.
+- Customer-facing support requests, bug reports, feature suggestions and replies; internal administrator notes are excluded from customer-visible history.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
@@ -40,7 +47,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Customer self-registration and login, subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, customer-facing ticket submission and replies, public feature voting, knowledge base/CMS, referral tracking, and visitor analytics are not working features yet. They must be designed, implemented and tested before being advertised or used. The customer directory is an administrator-managed contact register, not a customer account system. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting, knowledge base/CMS, referral tracking, and visitor analytics are not working features yet. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. The customer directory is an administrator-managed contact register, not a customer account system. No integration with the existing School, ERP, LIMS or POS databases is made here.
 
 ## Security / operations
 - Keep credentials in hosting environment variables, never in Git.
@@ -60,3 +67,7 @@ Customer self-registration and login, subscription plans and lifecycle, payment 
 - `content`: product catalogue management only.
 
 Role checks are enforced server-side; hiding navigation links is not the security boundary. Assign roles only through controlled database administration until a dedicated administrator-management screen is implemented.
+
+
+## Customer account mail configuration
+Customer verification and password-reset messages use PHP `mail()`. The hosting account must be configured to send mail for the address in `SMARTNOW_MAIL_FROM`; the sender address must pass SPF/DKIM/DMARC alignment for reliable delivery. `SMARTNOW_CUSTOMER_PORTAL_URL` must be the HTTPS base URL of the deployed customer portal. Do not enable public registration until a real mailbox has successfully received and completed verification and password-reset tests.
