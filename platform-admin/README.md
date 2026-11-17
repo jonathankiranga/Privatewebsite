@@ -35,7 +35,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
 - Product catalogue administration (create, edit and change publication status).
-- Customer directory (create, edit, search and change record status).
+- Customer directory (create, edit, search and change record status, with contact person, phone, country code, organisation and internal notes).
 - Support queue (filter, classify, prioritise, assign to an active administrator and update tickets).
 - Ticket conversation history with administrator replies and internal notes.
 
