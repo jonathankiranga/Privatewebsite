@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = (string)($_POST['password'] ?? '');
     $emailHash = hash('sha256', $email);
     $ipHash = hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? ''));
-    $limit = customer_db()->prepare('SELECT COUNT(*) AS attempts FROM platform_customer_login_attempts WHERE (email_hash=? OR ip_hash=?) AND attempted_at>DATE_SUB(NOW(),INTERVAL 15 MINUTE)');
+    $limit = customer_db()->prepare('SELECT COUNT(*) AS attempts FROM platform_customer_login_attempts WHERE was_successful=0 AND (email_hash=? OR ip_hash=?) AND attempted_at>DATE_SUB(NOW(),INTERVAL 15 MINUTE)');
     $limit->bind_param('ss', $emailHash, $ipHash);
     $limit->execute();
     $attemptCount = (int)$limit->get_result()->fetch_assoc()['attempts'];
@@ -26,6 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET last_login_at=NOW(),updated_at=updated_at WHERE id=?');
         $stmt->bind_param('i', $id);
         $stmt->execute();
+        $success = 1;
+        $log = customer_db()->prepare('INSERT INTO platform_customer_login_attempts (email_hash,ip_hash,was_successful) VALUES (?,?,?)');
+        $log->bind_param('ssi', $emailHash, $ipHash, $success);
+        $log->execute();
         customer_redirect('customer-dashboard.php');
     }
     $success = ($validLogin && $account['email_verified_at'] && !in_array($account['status'], ['suspended','closed'], true)) ? 1 : 0;
