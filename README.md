@@ -1,6 +1,6 @@
 # SmartNow Data Venture website
 
-A lightweight, dependency-free static website foundation for https://smarternowapps.co.ke/.
+A lightweight, dependency-free static website foundation for https://smarternowhosting.co.ke/.
 
 ## Current implementation
 
@@ -18,7 +18,7 @@ The product descriptions are scoped summaries, not a certification that every fe
 
 ## Deployment
 
-The repository currently contains static HTML and crawler files. It can be deployed as a static site by a compatible host. No build command or package installation is required. Configure the host's custom domain for `smarternowapps.co.ke` and verify HTTPS, canonical host redirects and sitemap availability after deployment.
+The repository currently contains static HTML and crawler files. It can be deployed as a static site by a compatible host. No build command or package installation is required. Configure the host's custom domain for `smarternowhosting.co.ke` and verify HTTPS, canonical host redirects and sitemap availability after deployment.
 
 ## Next engineering stages
 
