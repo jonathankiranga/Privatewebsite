@@ -16,7 +16,6 @@ This is a separate PHP/MySQLi administration application intended for a dedicate
    - `SMARTNOW_DB_NAME`
    - `SMARTNOW_DB_USER`
    - `SMARTNOW_DB_PASS`
-   - `SMARTNOW_BASE_URL` (for example, `https://admin.smarternowapps.co.ke`)
    - `SMARTNOW_SESSION_SECURE=1`
 4. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
