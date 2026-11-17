@@ -18,11 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $account = $stmt->get_result()->fetch_assoc();
-    $validLogin = $attemptCount < 10 && $account && password_verify($password, $account['password_hash']) && $account['email_verified_at'] && !in_array($account['status'], ['suspended','closed'], true)) {
+    $validLogin = $attemptCount < 10 && $account && password_verify($password, $account['password_hash']);
+    if ($validLogin && $account['email_verified_at'] && !in_array($account['status'], ['suspended','closed'], true)) {
         session_regenerate_id(true);
         $_SESSION['customer'] = ['account_id'=>(int)$account['id'],'account_updated_at'=>$account['updated_at'],'customer_id'=>(int)$account['customer_id'],'email'=>$account['email'],'contact_name'=>$account['contact_name'],'organisation_name'=>$account['organisation_name']];
         $id = (int)$account['id'];
-        $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET last_login_at=NOW() WHERE id=?');
+        $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET last_login_at=NOW(),updated_at=updated_at WHERE id=?');
         $stmt->bind_param('i', $id);
         $stmt->execute();
         customer_redirect('customer-dashboard.php');
