@@ -20,9 +20,8 @@ function page_header(string $title): void
 <div class="brand">SmartNow <span style="color:#8ea9ff">/ Admin</span></div>
 <?php if ($admin): ?>
 <a href="index.php">Overview</a>
-<a href="products.php">Products</a>
-<a href="customers.php">Customers</a>
-<a href="tickets.php">Support tickets</a>
+<?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="products.php">Products</a><?php endif; ?>
+<?php if (in_array($admin['role'] ?? '', ['owner','administrator','support'], true)): ?><a href="customers.php">Customers</a><a href="tickets.php">Support tickets</a><?php endif; ?>
 <div class="muted">Not yet available</div>
 <span style="font-size:12px;color:#8292ad;padding:0 12px">Subscriptions · Payments · Analytics · Knowledge base</span>
 <?php endif; ?>
