@@ -30,11 +30,13 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Login throttling by account and IP using the database.
 - First-admin creation via CLI only.
 - Audit records for authentication and product/customer/support actions.
+- Owner-only administrator management (create accounts, activate/deactivate access, and protect the last active owner).
+- Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
 - Product catalogue administration (create, edit and change publication status).
 - Customer directory (create, edit, search and change record status).
-- Support queue (filter, classify, prioritise and update tickets).
+- Support queue (filter, classify, prioritise, assign to an active administrator and update tickets).
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
