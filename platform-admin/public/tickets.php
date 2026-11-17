@@ -3,6 +3,21 @@ require dirname(__DIR__) . '/src/bootstrap.php';
 require dirname(__DIR__) . '/src/layout.php';
 require_roles(['owner','administrator','support']);
 
+function notify_ticket_customer(string $email, int $ticketId, string $subject, string $message): void
+{
+    $from = trim((string)getenv('SMARTNOW_MAIL_FROM'));
+    $base = rtrim((string)getenv('SMARTNOW_CUSTOMER_PORTAL_URL'), '/');
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || !filter_var($from, FILTER_VALIDATE_EMAIL) || !filter_var($base, FILTER_VALIDATE_URL) || strtolower((string)parse_url($base, PHP_URL_SCHEME)) !== 'https') {
+        error_log('Ticket notification skipped: customer mail configuration is incomplete.');
+        return;
+    }
+    $link = $base.'/customer-support.php?ticket='.$ticketId;
+    $body = "Hello,\\n\\nThere is an update to support request #".$ticketId." - ".$subject."\\n\\n".$message."\\n\\nView the request and reply securely here:\\n".$link."\\n";
+    $headers = "From: SmartNow Support <".$from.">\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+    $sent = mail($email, '=?UTF-8?B?'.base64_encode('SmartNow support request #'.$ticketId).'?=', $body, $headers);
+    if (!$sent) error_log('Ticket notification email could not be sent for ticket #'.$ticketId);
+}
+
 $error = '';
 $notice = '';
 $ticketId = (int)($_GET['ticket'] ?? 0);
@@ -34,10 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             if ($error === '') {
+            $before = db()->prepare('SELECT t.status,t.subject,COALESCE(c.email,t.requester_email) AS requester FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id WHERE t.id=?');
+            $before->bind_param('i', $ticketId);
+            $before->execute();
+            $previous = $before->get_result()->fetch_assoc();
             $stmt = db()->prepare('UPDATE platform_support_tickets SET status=?,priority=?,ticket_type=?,assigned_admin_id=? WHERE id=?');
             $stmt->bind_param('ssssi', $status, $priority, $type, $assignedAdminId, $ticketId);
             $stmt->execute();
             audit_event('ticket.updated', 'support_ticket', $ticketId, ['status'=>$status,'priority'=>$priority,'type'=>$type,'assigned_admin_id'=>$assignedAdminId]);
+            if ($previous && $previous['status'] !== $status && $previous['requester']) {
+                notify_ticket_customer($previous['requester'], $ticketId, $previous['subject'], 'The request status is now: '.str_replace('_',' ',$status).'.');
+            }
             redirect('tickets.php?ticket='.$ticketId.'&saved=1');
             }
         }
@@ -60,6 +82,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->bind_param('isisi', $ticketId, $authorType, $adminId, $message, $internal);
                 $stmt->execute();
                 audit_event('ticket.reply_added', 'support_ticket', $ticketId, ['internal'=>(bool)$internal]);
+                if (!$internal) {
+                    $details = db()->prepare('SELECT t.subject,COALESCE(c.email,t.requester_email) AS requester FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id WHERE t.id=?');
+                    $details->bind_param('i', $ticketId);
+                    $details->execute();
+                    $ticketDetails = $details->get_result()->fetch_assoc();
+                    if ($ticketDetails && $ticketDetails['requester']) {
+                        notify_ticket_customer($ticketDetails['requester'], $ticketId, $ticketDetails['subject'], 'A support team member has replied:\\n\\n'.$message);
+                    }
+                }
                 redirect('tickets.php?ticket='.$ticketId.'&replied=1');
             }
         }
