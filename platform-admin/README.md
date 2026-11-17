@@ -20,6 +20,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
    - `SMARTNOW_DB_PASS`
    - `SMARTNOW_SESSION_SECURE=1`
    - `SMARTNOW_MAIL_FROM` (a valid sender address configured on the hosting account)
+   - `SMARTNOW_SUPPORT_EMAIL` (the support-team inbox for new customer requests and replies)
    - `SMARTNOW_CUSTOMER_PORTAL_URL` (for example `https://cpanel.smarternowhosting.co.ke`; must be HTTPS and point to this app's public directory)
 6. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
@@ -39,6 +40,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Customer sign-in, sign-out, verification resend and password reset.
 - Customer account dashboard and profile management, including contact details and password changes; product licensing and subscriptions are explicitly shown as not yet active.
 - Customer-facing support requests, bug reports, feature suggestions and replies; internal administrator notes are excluded from customer-visible history.
+- Email notifications to the configured support inbox for new customer requests and replies, and to customers for public administrator replies and status changes.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
