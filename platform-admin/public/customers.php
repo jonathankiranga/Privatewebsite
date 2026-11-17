@@ -5,6 +5,7 @@ require_roles(['owner','administrator','support']);
 
 $error = '';
 $notice = '';
+$canManageCustomers = in_array((current_admin()['role'] ?? ''), ['owner','administrator'], true);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_roles(['owner','administrator']);
     verify_csrf();
@@ -73,14 +74,14 @@ page_header('Customers');
 <div class="eyebrow">Customer records</div><h1 class="heading">Customers</h1><p class="sub">Maintain customer and organisation records. These records are not customer login accounts or subscriptions.</p>
 <?php if ($notice): ?><div class="notice"><?= e($notice) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="notice error"><?= e($error) ?></div><?php endif; ?>
-<div class="panel"><h2><?= $editing ? 'Edit customer record' : 'Add customer record' ?></h2>
+<?php if ($canManageCustomers): ?><div class="panel"><h2><?= $editing ? 'Edit customer record' : 'Add a customer record' ?></h2>
 <form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= (int)($editing['id'] ?? 0) ?>">
 <div class="form-grid"><div><label for="email">Email address</label><input id="email" name="email" type="email" maxlength="190" required value="<?= e($editing['email'] ?? '') ?>"></div>
 <div><label for="organisation_name">Organisation</label><input id="organisation_name" name="organisation_name" maxlength="190" value="<?= e($editing['organisation_name'] ?? '') ?>"></div>
 <div><label for="status">Record status</label><select id="status" name="status"><?php foreach (['lead'=>'Lead','active'=>'Active','suspended'=>'Suspended','closed'=>'Closed'] as $v=>$label): ?><option value="<?= e($v) ?>" <?= (($editing['status'] ?? 'lead')===$v)?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select></div></div>
-<div class="actions" style="margin-top:18px"><button class="btn" type="submit">Save customer</button><?php if ($editing): ?><a class="btn secondary" href="customers.php">Cancel</a><?php endif; ?></div></form></div>
+<div class="actions" style="margin-top:18px"><button class="btn" type="submit">Save customer</button><?php if ($editing): ?><a class="btn secondary" href="customers.php">Cancel</a><?php endif; ?></div></form></div><?php endif; ?>
 <div class="panel"><div class="actions" style="justify-content:space-between"><h2>Customer directory</h2><form method="get" class="actions" style="margin:0"><input name="q" value="<?= e($search) ?>" placeholder="Search email or organisation" style="width:260px"><button class="btn secondary" type="submit">Search</button></form></div>
 <table><thead><tr><th>Email</th><th>Organisation</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>
-<?php if ($customers->num_rows): while ($c=$customers->fetch_assoc()): ?><tr><td><?= e($c['email']) ?></td><td><?= e($c['organisation_name'] ?: '—') ?></td><td><?= e(ucfirst($c['status'])) ?></td><td><?= e($c['created_at']) ?></td><td><a class="btn secondary" href="customers.php?edit=<?= (int)$c['id'] ?>">Edit</a></td></tr><?php endwhile; else: ?><tr><td colspan="5" class="empty">No customer records found.</td></tr><?php endif; ?>
+<?php if ($customers->num_rows): while ($c=$customers->fetch_assoc()): ?><tr><td><?= e($c['email']) ?></td><td><?= e($c['organisation_name'] ?: '—') ?></td><td><?= e(ucfirst($c['status'])) ?></td><td><?= e($c['created_at']) ?></td><td><?php if ($canManageCustomers): ?><a class="btn secondary" href="customers.php?edit=<?= (int)$c['id'] ?>">Edit</a><?php endif; ?></td></tr><?php endwhile; else: ?><tr><td colspan="5" class="empty">No customer records found.</td></tr><?php endif; ?>
 </tbody></table></div>
 <?php page_footer(); ?>
