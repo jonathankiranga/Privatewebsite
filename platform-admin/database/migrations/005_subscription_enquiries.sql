@@ -25,7 +25,7 @@ CREATE TABLE platform_subscription_enquiries (
   customer_id BIGINT UNSIGNED NOT NULL,
   plan_id BIGINT UNSIGNED NOT NULL,
   request_message TEXT NULL,
-  status ENUM('new','contacted','quoted','accepted','declined','closed') NOT NULL DEFAULT 'new',
+  status ENUM('new','contacted','quoted','quote_accepted','declined','closed') NOT NULL DEFAULT 'new',
   admin_notes TEXT NULL,
   assigned_admin_id BIGINT UNSIGNED NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
