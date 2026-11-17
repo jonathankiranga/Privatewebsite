@@ -15,7 +15,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 4. Run the one-time migration `database/migrations/003_customer_accounts.sql`. It creates the separate customer authentication and login-throttling tables.
 5. Run the one-time migration `database/migrations/004_knowledge_base.sql`. It creates the published help-article store.
 6. Run the one-time migration `database/migrations/005_subscription_enquiries.sql`. It creates the plan catalogue and customer enquiry workflow; it does not create paid subscriptions. Back up the database before applying migrations.
-5. Set environment variables in the hosting control panel:
+7. Set environment variables in the hosting control panel:
    - `SMARTNOW_DB_HOST`
    - `SMARTNOW_DB_NAME`
    - `SMARTNOW_DB_USER`
@@ -46,7 +46,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Subscription plan catalogue with administrator-entered pricing and terms, plus customer plan enquiries and an administrator sales pipeline. Enquiries do not create subscriptions or grant access.
 - Email notifications to the configured support inbox for new customer requests and replies, and to customers for public administrator replies and status changes.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
-- Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
+- Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue, plans and knowledge base; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
 - Product catalogue administration (create, edit and change publication status).
 - Customer directory (create, edit, search and change record status, with contact person, phone, country code, organisation and internal notes).
