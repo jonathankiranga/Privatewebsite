@@ -1,0 +1,9 @@
+<?php
+require dirname(__DIR__) . '/src/customer-bootstrap.php';
+require_customer();
+$customer = customer_current();
+?>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My SmartNow account</title><style>*{box-sizing:border-box}body{font-family:system-ui;background:#f4f6fa;color:#172033;margin:0}.wrap{max-width:1000px;margin:5vh auto;padding:20px}.top,.panel{background:#fff;border:1px solid #e5e9f0;border-radius:14px;padding:22px;margin-bottom:18px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px}.panel h2{margin-top:0}.muted{color:#64748b}.btn{padding:10px 15px;background:#2457d6;color:white;border:0;border-radius:8px;text-decoration:none;font-weight:650}.secondary{background:#eaf0ff;color:#2149ad}form{margin:0}</style></head><body><div class="wrap"><header class="top"><div><strong>SmartNow Customer Account</strong><div class="muted"><?= customer_e($customer['email']) ?></div></div><form method="post" action="customer-logout.php"><input type="hidden" name="csrf_token" value="<?= customer_e(customer_csrf_token()) ?>"><button class="btn secondary" type="submit">Sign out</button></form></header>
+<div class="panel"><h1>Welcome<?= $customer['contact_name'] ? ', '.customer_e($customer['contact_name']) : '' ?></h1><p class="muted">Manage your customer relationship with SmartNow Data Venture.</p><p><strong>Organisation:</strong> <?= customer_e($customer['organisation_name'] ?: 'Not supplied') ?></p><p><strong>Email:</strong> <?= customer_e($customer['email']) ?></p><a class="btn" href="customer-support.php">Support centre</a></div>
+<div class="panel"><h2>Products and subscriptions</h2><p class="muted">Subscription plans, payment processing and automatic application access are not enabled yet. This account does not currently activate product licences.</p></div>
+</div></body></html>
