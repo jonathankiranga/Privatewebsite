@@ -6,8 +6,9 @@ if (PHP_VERSION_ID < 70400) {
     exit('PHP 7.4 or later is required.');
 }
 
-$secureCookie = getenv('SMARTNOW_SESSION_SECURE') === '1';
-if (PHP_SAPI !== 'cli' && !$secureCookie && (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off')) {
+$isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+$secureCookie = getenv('SMARTNOW_SESSION_SECURE') === '1' || $isHttps;
+if (PHP_SAPI !== 'cli' && !$isHttps) {
     http_response_code(400);
     exit('HTTPS is required.');
 }
