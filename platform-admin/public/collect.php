@@ -29,7 +29,7 @@ $referrerHost = null;
 $referrer = (string)($data['referrer'] ?? '');
 if ($referrer !== '') {
     $host = parse_url($referrer, PHP_URL_HOST);
-    if (is_string($host) && $host !== '') $referrerHost = substr(strtolower($host), 0, 190);
+    if (is_string($host) && $host !== '') {\n        $host = strtolower($host);\n        if (!in_array($host, ['smarternowhosting.co.ke','www.smarternowhosting.co.ke','cpanel.smarternowhosting.co.ke'], true)) $referrerHost = substr($host, 0, 190);\n    }
 }
 $ua = strtolower((string)($_SERVER['HTTP_USER_AGENT'] ?? ''));
 $device = 'desktop';
