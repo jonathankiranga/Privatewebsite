@@ -93,18 +93,19 @@ function require_customer(): void
 {
     $session = customer_current();
     if (!$session || empty($session['account_id'])) customer_redirect('customer-login.php');
-    $stmt = customer_db()->prepare('SELECT a.id,a.customer_id,a.email_verified_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_accounts a INNER JOIN platform_customers c ON c.id=a.customer_id WHERE a.id=? LIMIT 1');
+    $stmt = customer_db()->prepare('SELECT a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_accounts a INNER JOIN platform_customers c ON c.id=a.customer_id WHERE a.id=? LIMIT 1');
     $accountId = (int)$session['account_id'];
     $stmt->bind_param('i', $accountId);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
-    if (!$row || !$row['email_verified_at'] || in_array($row['status'], ['suspended','closed'], true)) {
+    if (!$row || !$row['email_verified_at'] || in_array($row['status'], ['suspended','closed'], true) || empty($session['account_updated_at']) || $session['account_updated_at'] !== $row['updated_at']) {
         $_SESSION = [];
         session_destroy();
         customer_redirect('customer-login.php?access=unavailable');
     }
     $_SESSION['customer'] = [
         'account_id'=>(int)$row['id'],
+        'account_updated_at'=>$row['updated_at'],
         'customer_id'=>(int)$row['customer_id'],
         'email'=>$row['email'],
         'contact_name'=>$row['contact_name'],
