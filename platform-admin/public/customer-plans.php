@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $to = trim((string)getenv('SMARTNOW_SUPPORT_EMAIL'));
             $base = rtrim((string)getenv('SMARTNOW_CUSTOMER_PORTAL_URL'), '/');
             if (filter_var($from, FILTER_VALIDATE_EMAIL) && filter_var($to, FILTER_VALIDATE_EMAIL) && filter_var($base, FILTER_VALIDATE_URL) && strtolower((string)parse_url($base, PHP_URL_SCHEME)) === 'https') {
-                $body = "The customer has accepted the quote for enquiry #".$enquiryId.".\\n\\nCustomer: ".$customer['email']."\\nReview the enquiry and arrange payment and setup:\\n".$base.'/enquiries.php?enquiry='.$enquiryId;
-                $headers = "From: SmartNow Support <".$from.">\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+                $body = "The customer has accepted the quote for enquiry #".$enquiryId.".\n\nCustomer: ".$customer['email']."\nReview the enquiry and arrange payment and setup:\n".$base.'/enquiries.php?enquiry='.$enquiryId;
+                $headers = "From: SmartNow Support <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
                 mail($to, '=?UTF-8?B?'.base64_encode('Quote accepted - enquiry #'.$enquiryId).'?=', $body, $headers);
             }
             customer_redirect('customer-plans.php?accepted=1');
