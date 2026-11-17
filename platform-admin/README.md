@@ -37,7 +37,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Owner-only administrator management (create accounts, activate/deactivate access, and protect the last active owner).
 - Customer registration with password hashing and email verification.
 - Customer sign-in, sign-out, verification resend and password reset.
-- Customer account dashboard with explicit notice that product licensing and subscriptions are not yet active.
+- Customer account dashboard and profile management, including contact details and password changes; product licensing and subscriptions are explicitly shown as not yet active.
 - Customer-facing support requests, bug reports, feature suggestions and replies; internal administrator notes are excluded from customer-visible history.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
 - Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue; support administrators access customer records read-only and manage support tickets.
