@@ -24,7 +24,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
    - `SMARTNOW_SESSION_SECURE=1`
    - `SMARTNOW_MAIL_FROM` (a valid sender address configured on the hosting account)
    - `SMARTNOW_SUPPORT_EMAIL` (the support-team inbox for new customer requests and replies)
-   - `SMARTNOW_ANALYTICS_SECRET` (a random secret of at least 32 characters used to HMAC pseudonymous visitor and rate-limit identifiers; keep it private and consistent)
+   - `SMARTNOW_ANALYTICS_SECRET` (a random secret of at least 32 characters used to HMAC pseudonymous visitor and rate-limit identifiers; keep it private and consistent; generate one with `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`)
    - `SMARTNOW_CUSTOMER_PORTAL_URL` (for example `https://cpanel.smarternowhosting.co.ke`; must be HTTPS and point to this app's public directory)
 8. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
@@ -60,6 +60,14 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 
 ## Not yet implemented
 Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting and referral tracking are not working features yet. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+
+## Analytics and public submissions setup
+- Apply migration 006 after migrations 002–005.
+- Configure `SMARTNOW_ANALYTICS_SECRET` in the PHP environment on the customer-platform subdomain. Do not put it in browser JavaScript or commit it to Git.
+- The collector accepts browser events only from `https://smarternowhosting.co.ke`; if the public site is later served from another origin, update the exact-origin allow-list in `public/collect.php` deliberately.
+- The public website loads `/analytics.js`; the script asks for consent before creating its first-party visitor identifier or sending page-view events.
+- Public form submissions are stored as unlinked support tickets with the supplied reply email; administrators can review and respond in Support tickets. Notification delivery depends on `SMARTNOW_MAIL_FROM` and `SMARTNOW_SUPPORT_EMAIL`.
+- Current analytics does not resolve visitor country/region and does not collect age or gender. Do not infer those attributes from IP addresses or browsing behaviour.
 
 ## Security / operations
 - Keep credentials in hosting environment variables, never in Git.
