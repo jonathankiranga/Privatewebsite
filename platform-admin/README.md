@@ -47,7 +47,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting, knowledge base/CMS, referral tracking, and visitor analytics are not working features yet. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. The customer directory is an administrator-managed contact register, not a customer account system. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting, knowledge base/CMS, referral tracking, and visitor analytics are not working features yet. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
 
 ## Security / operations
 - Keep credentials in hosting environment variables, never in Git.
@@ -66,7 +66,7 @@ Subscription plans and lifecycle, payment collection/M-Pesa, refunds, customer a
 - `support`: read-only customer directory and support-ticket management; cannot change customer records or manage products.
 - `content`: product catalogue management only.
 
-Role checks are enforced server-side; hiding navigation links is not the security boundary. Assign roles only through controlled database administration until a dedicated administrator-management screen is implemented.
+Role checks are enforced server-side; hiding navigation links is not the security boundary. New administrator roles can be selected when creating an account; changing an existing administrator's role is not yet supported in the interface.
 
 
 ## Customer account mail configuration
