@@ -18,3 +18,5 @@ Disallow: /customer-forgot.php
 Disallow: /customer-reset.php
 Allow: /help.php
 Allow: /article.php
+Disallow: /analytics.php
+Disallow: /collect.php
