@@ -12,8 +12,8 @@ function notify_ticket_customer(string $email, int $ticketId, string $subject, s
         return;
     }
     $link = $base.'/customer-support.php?ticket='.$ticketId;
-    $body = "Hello,\\n\\nThere is an update to support request #".$ticketId." - ".$subject."\\n\\n".$message."\\n\\nView the request and reply securely here:\\n".$link."\\n";
-    $headers = "From: SmartNow Support <".$from.">\\r\\nContent-Type: text/plain; charset=UTF-8\\r\\n";
+    $body = "Hello,\n\nThere is an update to support request #".$ticketId." - ".$subject."\n\n".$message."\n\nView the request and reply securely here:\n".$link."\n";
+    $headers = "From: SmartNow Support <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
     $sent = mail($email, '=?UTF-8?B?'.base64_encode('SmartNow support request #'.$ticketId).'?=', $body, $headers);
     if (!$sent) error_log('Ticket notification email could not be sent for ticket #'.$ticketId);
 }
@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $details->execute();
                     $ticketDetails = $details->get_result()->fetch_assoc();
                     if ($ticketDetails && $ticketDetails['requester']) {
-                        notify_ticket_customer($ticketDetails['requester'], $ticketId, $ticketDetails['subject'], 'A support team member has replied:\\n\\n'.$message);
+                        notify_ticket_customer($ticketDetails['requester'], $ticketId, $ticketDetails['subject'], "A support team member has replied:\n\n".$message);
                     }
                 }
                 redirect('tickets.php?ticket='.$ticketId.'&replied=1');
