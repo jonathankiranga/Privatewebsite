@@ -19,7 +19,7 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
     $port = (int)getenv('SMARTNOW_SMTP_PORT');
     $encryption = strtolower(trim((string)getenv('SMARTNOW_SMTP_ENCRYPTION')));
 
-    if (!class_exists(\\PHPMailer\\PHPMailer\\PHPMailer::class)) {
+    if (!class_exists(\PHPMailer\PHPMailer\PHPMailer::class)) {
         error_log('SmarterNow email unavailable: PHPMailer is not installed. Run Composer install in platform-admin/.');
         return false;
     }
@@ -30,7 +30,7 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         return false;
     }
 
-    $mail = new \\PHPMailer\\PHPMailer\\PHPMailer(true);
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
     try {
         $mail->isSMTP();
         $mail->Host = $host;
@@ -38,8 +38,8 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         $mail->Username = $username;
         $mail->Password = $password;
         $mail->SMTPSecure = $encryption === 'ssl'
-            ? \\PHPMailer\\PHPMailer\\PHPMailer::ENCRYPTION_SMTPS
-            : \\PHPMailer\\PHPMailer\\PHPMailer::ENCRYPTION_STARTTLS;
+            ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
+            : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = $port;
         $mail->CharSet = 'UTF-8';
         $mail->isHTML(false);
@@ -52,7 +52,7 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         $mail->send();
         error_log('SmarterNow SMTP server accepted an email for delivery to recipient hash '.hash('sha256', strtolower($to)).'.');
         return true;
-    } catch (\\Throwable $e) {
+    } catch (\Throwable $e) {
         error_log('SmarterNow SMTP delivery failed: '.($mail->ErrorInfo !== '' ? $mail->ErrorInfo : $e->getMessage()));
         return false;
     }
