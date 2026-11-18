@@ -12,8 +12,19 @@ if (PHP_SAPI !== 'cli' && !$isHttps) {
     http_response_code(400);
     exit('HTTPS is required.');
 }
-ini_set('session.use_strict_mode', '1');
+/*
+ * Keep customer authentication isolated to its own HTTPS-only session cookie.
+ * Explicit INI settings override shared-hosting PHP defaults.
+ */
+ini_set('session.use_cookies', '1');
 ini_set('session.use_only_cookies', '1');
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_trans_sid', '0');
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
+ini_set('session.cookie_path', '/');
+
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
 
@@ -22,11 +33,27 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
+        'domain' => '',
         'secure' => true,
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
-    session_start();
+
+    if (!session_start()) {
+        error_log('SmartNow customer session_start() failed. Check PHP session.save_path and directory permissions.');
+        http_response_code(500);
+        exit('The customer session could not be started. Please try again later.');
+    }
+} elseif (session_name() !== 'SMARTNOW_CUSTOMER') {
+    error_log('SmartNow customer bootstrap found an already-active PHP session with an unexpected name.');
+    http_response_code(500);
+    exit('The customer session is not configured correctly.');
+}
+
+if (session_id() === '') {
+    error_log('SmartNow customer bootstrap has no active PHP session ID.');
+    http_response_code(500);
+    exit('The customer session could not be started. Please try again later.');
 }
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
