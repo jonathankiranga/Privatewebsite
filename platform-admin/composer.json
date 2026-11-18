@@ -1,0 +1,13 @@
+{
+    "name": "smarternow/platform-admin",
+    "description": "SmarterNow administration and customer portal",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpmailer/phpmailer": "^6.10"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
