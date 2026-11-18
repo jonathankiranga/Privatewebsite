@@ -13,7 +13,21 @@ declare(strict_types=1);
 $privateConfigFile = dirname(__DIR__, 3) . '/private-config/platform-admin.php';
 
 if (is_file($privateConfigFile) && is_readable($privateConfigFile)) {
-    $privateConfig = require $privateConfigFile;
+    /*
+     * A BOM or whitespace outside PHP tags in the private config must never
+     * reach the HTTP response before session cookies and headers are sent.
+     * Capture and discard accidental output while still loading its return value.
+     */
+    ob_start();
+    try {
+        $privateConfig = require $privateConfigFile;
+    } finally {
+        $unexpectedOutput = ob_get_clean();
+    }
+
+    if ($unexpectedOutput !== '') {
+        error_log('SmartNow private configuration emitted output; remove any BOM, whitespace, or closing PHP tag from platform-admin.php.');
+    }
 
     if (is_array($privateConfig)) {
         foreach ($privateConfig as $key => $value) {
