@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/load-config.php';
+require_once __DIR__ . '/mailer.php';
 
 if (PHP_VERSION_ID < 70400) {
     http_response_code(500);
@@ -104,14 +105,7 @@ function customer_redirect(string $path): void
 }
 function customer_send_mail(string $to, string $subject, string $body): bool
 {
-    $from = trim((string)getenv('SMARTNOW_MAIL_FROM'));
-    if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
-        error_log('SMARTNOW_MAIL_FROM is not configured with a valid email address.');
-        return false;
-    }
-    $headers = "From: SmartNow Support <".$from.">\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    return mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', $body, $headers);
+    return platform_send_mail($to, $subject, $body, 'SmarterNow Support');
 }
 function customer_portal_url(string $path, string $token): ?string
 {
