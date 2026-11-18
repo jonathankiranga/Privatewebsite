@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($attempts >= 10) {
         $error = 'Too many attempts. Wait 15 minutes before trying again.';
     } else {
-        $stmt = db()->prepare('SELECT id,email,password_hash,display_name,role,is_active,locked_until FROM admin_users WHERE email=? LIMIT 1');
+        $stmt = db()->prepare('SELECT id,email,password_hash,display_name,role,is_active,locked_until,auth_version FROM admin_users WHERE email=? LIMIT 1');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $user = $stmt->get_result()->fetch_assoc();
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $log->execute();
         if ($valid) {
             session_regenerate_id(true);
-            $_SESSION['admin'] = ['id'=>(int)$user['id'],'email'=>$user['email'],'display_name'=>$user['display_name'],'role'=>$user['role']];
+            $_SESSION['admin'] = ['id'=>(int)$user['id'],'email'=>$user['email'],'display_name'=>$user['display_name'],'role'=>$user['role'],'auth_version'=>(int)$user['auth_version']];
             $reset = db()->prepare('UPDATE admin_users SET failed_attempts=0,locked_until=NULL,last_login_at=NOW() WHERE id=?');
             $reset->bind_param('i', $user['id']);
             $reset->execute();
@@ -55,7 +55,7 @@ page_header('Administrator sign in');
 <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
 <label for="email">Email address</label><input id="email" name="email" type="email" maxlength="190" autocomplete="username" required>
 <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
-<div style="margin-top:22px"><button class="btn" type="submit">Sign in</button></div>
+<div style="margin-top:22px"><button class="btn" type="submit">Sign in</button></div><p style="margin:16px 0 0;font-size:14px"><a href="admin-forgot.php">Forgot your administrator password?</a></p>
 </form>
 </div></div>
 <?php page_footer(); ?>
