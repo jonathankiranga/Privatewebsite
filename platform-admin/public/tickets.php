@@ -13,9 +13,9 @@ function notify_ticket_customer(string $email, int $ticketId, string $subject, s
     }
     $link = $base.'/customer-support.php?ticket='.$ticketId;
     $body = "Hello,\n\nThere is an update to support request #".$ticketId." - ".$subject."\n\n".$message."\n\nView the request and reply securely here:\n".$link."\n";
-    $headers = "From: SmartNow Support <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
-    $sent = mail($email, '=?UTF-8?B?'.base64_encode('SmartNow support request #'.$ticketId).'?=', $body, $headers);
-    if (!$sent) error_log('Ticket notification email could not be sent for ticket #'.$ticketId);
+    if (!admin_send_mail($email, 'SmartNow support request #'.$ticketId, $body)) {
+        error_log('Ticket customer SMTP notification failed for ticket #'.$ticketId);
+    }
 }
 
 $error = '';
