@@ -16,20 +16,28 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 5. Run the one-time migration `database/migrations/004_knowledge_base.sql`. It creates the published help-article store.
 6. Run the one-time migration `database/migrations/005_subscription_enquiries.sql`. It creates the plan catalogue and customer enquiry workflow; it does not create paid subscriptions.
 7. Run the one-time migration `database/migrations/006_analytics_and_public_submissions.sql`. It creates pseudonymous visitor event storage and public-form rate limiting. Back up the database before applying migrations.
-7. Set environment variables in the hosting control panel:
-   - `SMARTNOW_DB_HOST`
-   - `SMARTNOW_DB_NAME`
-   - `SMARTNOW_DB_USER`
-   - `SMARTNOW_DB_PASS`
-   - `SMARTNOW_SESSION_SECURE=1`
-   - `SMARTNOW_MAIL_FROM` (a valid sender address configured on the hosting account)
-   - `SMARTNOW_SUPPORT_EMAIL` (the support-team inbox for new customer requests and replies)
-   - `SMARTNOW_ANALYTICS_SECRET` (a random secret of at least 32 characters used to HMAC pseudonymous visitor and rate-limit identifiers; keep it private and consistent; generate one with `php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"`)
-   - `SMARTNOW_CUSTOMER_PORTAL_URL` (for example `https://cpanel.smarternowhosting.co.ke`; must be HTTPS and point to this app's public directory)
-8. From the project root, create the first administrator using the CLI:
+7. Create the private configuration directory outside the website's public document root. On this hosting account, use:
+   `/home/smartern/private-config/`
+8. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
+   ```php
+   <?php
+   return [
+       'SMARTNOW_DB_HOST' => 'localhost',
+       'SMARTNOW_DB_NAME' => 'YOUR_DATABASE_NAME',
+       'SMARTNOW_DB_USER' => 'YOUR_DATABASE_USERNAME',
+       'SMARTNOW_DB_PASS' => 'YOUR_DATABASE_PASSWORD',
+       'SMARTNOW_SESSION_SECURE' => '1',
+       'SMARTNOW_MAIL_FROM' => 'support@smarternowhosting.co.ke',
+       'SMARTNOW_SUPPORT_EMAIL' => 'support@smarternowhosting.co.ke',
+       'SMARTNOW_ANALYTICS_SECRET' => 'REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS',
+       'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://cpanel.smarternowhosting.co.ke'
+   ];
+   ```
+   The application loads this private file automatically for the admin, customer and public help-centre bootstraps. Hosting environment variables, when set to a non-empty value, take precedence over values in this file. The PHP process must be able to read the file; restrict directory/file permissions as tightly as your hosting account permits (for example directory `0750`, file `0640`).
+9. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-9. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+10. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication.
@@ -70,7 +78,7 @@ Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer applic
 - Current analytics does not resolve visitor country/region and does not collect age or gender. Do not infer those attributes from IP addresses or browsing behaviour.
 
 ## Security / operations
-- Keep credentials in hosting environment variables, never in Git.
+- Keep database credentials and secrets in `/home/smartern/private-config/platform-admin.php` or hosting environment variables; never put the private config file in `public_html` or commit it to Git.
 - Restrict database access to this application.
 - Back up the database and test restores.
 - Keep PHP errors out of public responses; send them to server logs.
