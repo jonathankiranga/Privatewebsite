@@ -14,7 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
     if ($officeLocation === '' || mb_strlen($officeLocation) > 255) {
         $officeError = 'Please enter a valid office location (1 to 255 characters).';
     } else {
-        $adminId = (int)($_SESSION['admin_user_id'] ?? 0);
+        $admin = current_admin();
+        $adminId = (int)($admin['id'] ?? 0);
         $stmt = db()->prepare("INSERT INTO site_settings (setting_key, setting_value, updated_by) VALUES ('office_location', ?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_by = VALUES(updated_by)");
         $stmt->bind_param('si', $officeLocation, $adminId);
         $stmt->execute();
@@ -45,7 +46,7 @@ $recentTickets = db()->query('SELECT t.id, t.subject, t.priority, t.status, t.cr
 $recentAudits = db()->query('SELECT a.event_type AS action, a.entity_type, a.entity_id, a.details_json AS detail, a.created_at, u.display_name AS full_name FROM admin_audit_events a LEFT JOIN admin_users u ON u.id = a.admin_user_id ORDER BY a.created_at DESC LIMIT 8')->fetch_all(MYSQLI_ASSOC);
 page_header('Overview');
 ?>
-<div class="grid">
+<div class="cards">
   <div class="card"><div class="muted">Products</div><div class="kpi"><?= $counts['products'] ?></div></div>
   <div class="card"><div class="muted">Active Plans</div><div class="kpi"><?= $counts['plans'] ?></div></div>
   <div class="card"><div class="muted">Customers</div><div class="kpi"><?= $counts['customers'] ?></div></div>
@@ -53,19 +54,19 @@ page_header('Overview');
   <div class="card"><div class="muted">New Enquiries</div><div class="kpi"><?= $counts['new_enquiries'] ?></div></div>
   <div class="card"><div class="muted">Published KB</div><div class="kpi"><?= $counts['published_articles'] ?></div></div>
 </div>
-<div class="card" style="margin-top:16px;">
+<div class="panel">
   <h3>Website Office Location</h3>
   <?php if ($officeMessage): ?><p style="color:#0e7a70;font-weight:600;"><?= e($officeMessage) ?></p><?php endif; ?>
   <?php if ($officeError): ?><p style="color:#b42318;font-weight:600;"><?= e($officeError) ?></p><?php endif; ?>
   <form method="post" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-    <?= csrf_field() ?>
+    <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
     <input type="hidden" name="action" value="save_office_location">
     <input type="text" name="office_location" value="<?= e($currentOfficeLocation) ?>" maxlength="255" required style="flex:1;min-width:260px;padding:8px 12px;">
     <button type="submit" class="btn">Save Office Location</button>
   </form>
 </div>
-<div class="split">
+<div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:20px;">
   <div class="card"><h3>Recent Support Tickets</h3><?php if (!$recentTickets): ?><p class="muted">No support tickets logged yet.</p><?php else: ?><table><thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead><tbody><?php foreach ($recentTickets as $ticket): ?><tr><td><a href="tickets.php?id=<?= (int)$ticket['id'] ?>">#<?= (int)$ticket['id'] ?></a></td><td><?= e($ticket['subject']) ?></td><td><?= e($ticket['full_name'] ?: $ticket['email'] ?: 'Unassigned') ?></td><td><span class="badge"><?= e($ticket['status']) ?></span></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
-  <div class="card"><h3>Recent Admin Audit Events</h3><?php if (!$recentAudits): ?><p class="muted">No audit events recorded yet.</p><?php else: ?><table><thead><tr><th>Action</th><th>By</th><th>Detail</th></tr></thead><tbody><?php foreach ($recentAudits as $audit): ?><tr><td><?= e($audit['action']) ?></td><td><?= e($audit['full_name'] ?: 'System') ?></td><td class="muted"><?= e(format_audit_detail($audit['detail'] ?? null)) ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
+  <div class="card"><h3>Recent Admin Audit Events</h3><?php if (!$recentAudits): ?><p class="muted">No audit events recorded yet.</p><?php else: ?><table><thead><tr><th>Action</th><th>By</th><th>Detail</th></tr></thead><tbody><?php foreach ($recentAudits as $audit): ?><tr><td><?= e($audit['action']) ?></td><td><?= e($audit['full_name'] ?: 'System') ?></td><td class="muted"><?= e($audit['detail'] ?? '') ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
 </div>
 <?php page_footer(); ?>
