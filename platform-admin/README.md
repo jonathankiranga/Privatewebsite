@@ -31,6 +31,11 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
        'SMARTNOW_SESSION_SECURE' => '1',
        'SMARTNOW_MAIL_FROM' => 'support@smarternowhosting.co.ke',
        'SMARTNOW_SUPPORT_EMAIL' => 'support@smarternowhosting.co.ke',
+       'SMARTNOW_SMTP_HOST' => 'YOUR_HOSTING_SMTP_HOST',
+       'SMARTNOW_SMTP_PORT' => '465',
+       'SMARTNOW_SMTP_USERNAME' => 'support@smarternowhosting.co.ke',
+       'SMARTNOW_SMTP_PASSWORD' => 'YOUR_MAILBOX_PASSWORD',
+       'SMARTNOW_SMTP_ENCRYPTION' => 'ssl',
        'SMARTNOW_ANALYTICS_SECRET' => 'REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS',
        'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke',
        'SMARTNOW_ADMIN_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke'
@@ -40,7 +45,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 12. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-13. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+13. From the `platform-admin` directory, run `composer install --no-dev --optimize-autoloader` to install PHPMailer into `platform-admin/vendor/`. Upload the generated `vendor/` directory together with the application if Composer is not available on the hosting account. Keep `vendor/` outside the public document root.\n14. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication with email-based, one-time password recovery links (one-hour expiry), request throttling, and forced invalidation of existing admin sessions after a reset.
@@ -70,7 +75,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting and referral tracking are not working features yet. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery depends on the hosting account's PHP mail configuration; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting and referral tracking are not working features yet. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery uses authenticated SMTP through PHPMailer; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
 
 ## Analytics and public submissions setup
 - Apply migration 006 after migrations 002–005.
@@ -102,7 +107,7 @@ Role checks are enforced server-side; hiding navigation links is not the securit
 
 
 ## Administrator password recovery mail configuration
-Administrator password recovery uses PHP `mail()` and the `SMARTNOW_ADMIN_PORTAL_URL` HTTPS base URL. Set that value to `https://admin.smarternowhosting.co.ke` in the private configuration file. Apply migration 008 before using the recovery pages. The same configured `SMARTNOW_MAIL_FROM` sender is used. Test delivery to an active administrator mailbox before relying on recovery.
+All platform email is sent through PHPMailer using authenticated SMTP; PHP `mail()` is not used. Configure `SMARTNOW_SMTP_HOST`, `SMARTNOW_SMTP_PORT`, `SMARTNOW_SMTP_USERNAME`, `SMARTNOW_SMTP_PASSWORD` and `SMARTNOW_SMTP_ENCRYPTION` in the private configuration file. Use the SMTP hostname, port and encryption supplied by your hosting provider (commonly port 465 with `ssl`, or port 587 with `tls`). The SMTP username is normally the full mailbox address. `SMARTNOW_MAIL_FROM` must be an address permitted by that authenticated mailbox. Administrator password recovery also requires `SMARTNOW_ADMIN_PORTAL_URL` to be set to `https://admin.smarternowhosting.co.ke`. Apply migration 008 before using the recovery pages. Test delivery to an active administrator mailbox before relying on recovery.
 
 ## Customer account mail configuration
-Customer verification and password-reset messages use PHP `mail()`. The hosting account must be configured to send mail for the address in `SMARTNOW_MAIL_FROM`; the sender address must pass SPF/DKIM/DMARC alignment for reliable delivery. `SMARTNOW_CUSTOMER_PORTAL_URL` must be the HTTPS base URL of the deployed customer portal. Do not enable public registration until a real mailbox has successfully received and completed verification and password-reset tests.
+Customer verification and password-reset messages use the same PHPMailer SMTP configuration. The sender address must be authorised for the authenticated mailbox and pass SPF/DKIM/DMARC alignment for reliable delivery. `SMARTNOW_CUSTOMER_PORTAL_URL` must be the HTTPS base URL of the deployed customer portal. Do not enable public registration until a real mailbox has successfully received and completed verification and password-reset tests.
