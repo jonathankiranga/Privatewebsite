@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$mailAccepted) {
                     error_log('SmartNow administrator password reset SMTP delivery failed for admin ID '.$adminId.'. See the PHPMailer SMTP diagnostic immediately before this entry.');
                 } else {
-                    error_log('SmartNow administrator password reset SMTP server accepted the message for admin ID '.$adminId.'. This confirms SMTP server acceptance, not final delivery to the recipient's inbox.');
+                    error_log('SmartNow administrator password reset SMTP server accepted the message for admin ID '.$adminId.'. This confirms SMTP server acceptance, not final delivery to the recipient inbox.');
                 }
             }
         }
