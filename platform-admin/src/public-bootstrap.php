@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/load-config.php';
+require_once __DIR__ . '/mailer.php';
 
 if (PHP_VERSION_ID < 70400) {
     http_response_code(500);
