@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var endpoint = 'https://cpanel.smarternowhosting.co.ke/collect.php';
+  var endpoint = 'https://admin.smarternowhosting.co.ke/collect.php';
   var storageKey = 'smartnow_analytics_consent';
   var bannerId = 'smartnow-privacy-banner';
   function visitorId() {
