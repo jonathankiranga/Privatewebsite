@@ -89,8 +89,8 @@ function admin_send_mail(string $to, string $subject, string $body): bool
         error_log('SMARTNOW_MAIL_FROM is not configured with a valid email address.');
         return false;
     }
-    $headers = "From: SmartNow Administration <".$from.">\\r\\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\\r\\n";
+    $headers = "From: SmartNow Administration <".$from.">\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
     return mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', $body, $headers);
 }
 
