@@ -82,6 +82,28 @@ function verify_csrf(): void
     }
 }
 
+function admin_send_mail(string $to, string $subject, string $body): bool
+{
+    $from = trim((string)getenv('SMARTNOW_MAIL_FROM'));
+    if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+        error_log('SMARTNOW_MAIL_FROM is not configured with a valid email address.');
+        return false;
+    }
+    $headers = "From: SmartNow Administration <".$from.">\\r\\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\\r\\n";
+    return mail($to, '=?UTF-8?B?'.base64_encode($subject).'?=', $body, $headers);
+}
+
+function admin_portal_url(string $path, string $token): ?string
+{
+    $base = rtrim((string)getenv('SMARTNOW_ADMIN_PORTAL_URL'), '/');
+    if (!$base || !filter_var($base, FILTER_VALIDATE_URL) || strtolower((string)parse_url($base, PHP_URL_SCHEME)) !== 'https') {
+        error_log('SMARTNOW_ADMIN_PORTAL_URL is not configured as a valid HTTPS URL.');
+        return null;
+    }
+    return $base.'/'.$path.'?token='.rawurlencode($token);
+}
+
 function current_admin(): ?array
 {
     return isset($_SESSION['admin']) && is_array($_SESSION['admin']) ? $_SESSION['admin'] : null;
@@ -95,13 +117,13 @@ function require_admin(): void
         exit;
     }
 
-    $stmt = db()->prepare('SELECT id,email,display_name,role,is_active FROM admin_users WHERE id=? LIMIT 1');
+    $stmt = db()->prepare('SELECT id,email,display_name,role,is_active,auth_version FROM admin_users WHERE id=? LIMIT 1');
     $adminId = (int)$sessionAdmin['id'];
     $stmt->bind_param('i', $adminId);
     $stmt->execute();
     $freshAdmin = $stmt->get_result()->fetch_assoc();
 
-    if (!$freshAdmin || (int)$freshAdmin['is_active'] !== 1) {
+    if (!$freshAdmin || (int)$freshAdmin['is_active'] !== 1 || !isset($sessionAdmin['auth_version']) || (int)$sessionAdmin['auth_version'] !== (int)$freshAdmin['auth_version']) {
         $_SESSION = [];
         session_destroy();
         header('Location: login.php');
@@ -112,7 +134,8 @@ function require_admin(): void
         'id' => (int)$freshAdmin['id'],
         'email' => $freshAdmin['email'],
         'display_name' => $freshAdmin['display_name'],
-        'role' => $freshAdmin['role']
+        'role' => $freshAdmin['role'],
+        'auth_version' => (int)$freshAdmin['auth_version']
     ];
 }
 
