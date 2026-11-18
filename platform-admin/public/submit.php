@@ -62,8 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $from = trim((string)getenv('SMARTNOW_MAIL_FROM'));
                         if (filter_var($support, FILTER_VALIDATE_EMAIL) && filter_var($from, FILTER_VALIDATE_EMAIL)) {
                             $body = "A new public website submission (#".$ticketId.") was received.\n\nName: ".$name."\nEmail: ".$email."\nType: ".$type."\nSubject: ".$subject."\n\n".$description."\n\nReview it in the administration portal.";
-                            $headers = "From: SmartNow Website <".$from.">\r\nContent-Type: text/plain; charset=UTF-8\r\n";
-                            if (!mail($support, '=?UTF-8?B?'.base64_encode('Website submission #'.$ticketId).'?=', $body, $headers)) error_log('Website submission notification failed for ticket #'.$ticketId);
+                            if (!platform_send_mail($support, 'Website submission #'.$ticketId, $body, 'SmarterNow Website')) {
+                                error_log('Website submission was saved, but its SMTP notification failed for ticket #'.$ticketId.'.');
+                            }
                         } else error_log('Website submission saved but support email is not configured.');
                         unset($_SESSION['public_form_csrf']);
                         header('Location: submit.php?sent=1');
