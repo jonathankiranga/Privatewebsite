@@ -35,14 +35,14 @@ try {
 
 $counts = [
     'products' => (int)db()->query('SELECT COUNT(*) AS c FROM platform_products')->fetch_assoc()['c'],
-    'plans' => (int)db()->query('SELECT COUNT(*) AS c FROM subscription_plans WHERE is_active = 1')->fetch_assoc()['c'],
-    'customers' => (int)db()->query('SELECT COUNT(*) AS c FROM customers')->fetch_assoc()['c'],
-    'open_tickets' => (int)db()->query("SELECT COUNT(*) AS c FROM support_tickets WHERE status IN ('open', 'in_progress')")->fetch_assoc()['c'],
-    'new_enquiries' => (int)db()->query("SELECT COUNT(*) AS c FROM subscription_enquiries WHERE status = 'new'")->fetch_assoc()['c'],
-    'published_articles' => (int)db()->query("SELECT COUNT(*) AS c FROM knowledge_articles WHERE status = 'published'")->fetch_assoc()['c'],
+    'plans' => (int)db()->query('SELECT COUNT(*) AS c FROM platform_subscription_plans WHERE is_published = 1')->fetch_assoc()['c'], 
+    'customers' => (int)db()->query('SELECT COUNT(*) AS c FROM platform_customers')->fetch_assoc()['c'], 
+    'open_tickets' => (int)db()->query("SELECT COUNT(*) AS c FROM platform_support_tickets WHERE status IN ('open', 'in_progress')")->fetch_assoc()['c'], 
+    'new_enquiries' => (int)db()->query("SELECT COUNT(*) AS c FROM platform_subscription_enquiries WHERE status = 'new'")->fetch_assoc()['c'], 
+    'published_articles' => (int)db()->query("SELECT COUNT(*) AS c FROM platform_kb_articles WHERE status = 'published'")->fetch_assoc()['c'], 
 ];
-$recentTickets = db()->query('SELECT t.id, t.ticket_ref, t.subject, t.priority, t.status, t.created_at, c.full_name, c.email FROM support_tickets t LEFT JOIN customers c ON c.id = t.customer_id ORDER BY t.created_at DESC LIMIT 6')->fetch_all(MYSQLI_ASSOC);
-$recentAudits = db()->query('SELECT a.action, a.entity_type, a.entity_id, a.detail, a.created_at, u.full_name FROM admin_audit_log a LEFT JOIN admin_users u ON u.id = a.admin_user_id ORDER BY a.created_at DESC LIMIT 8')->fetch_all(MYSQLI_ASSOC);
+$recentTickets = db()->query('SELECT t.id, t.subject, t.priority, t.status, t.created_at, c.contact_name AS full_name, c.email FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id = t.customer_id ORDER BY t.created_at DESC LIMIT 6')->fetch_all(MYSQLI_ASSOC);
+$recentAudits = db()->query('SELECT a.event_type AS action, a.entity_type, a.entity_id, a.details_json AS detail, a.created_at, u.display_name AS full_name FROM admin_audit_events a LEFT JOIN admin_users u ON u.id = a.admin_user_id ORDER BY a.created_at DESC LIMIT 8')->fetch_all(MYSQLI_ASSOC);
 render_header('Overview', 'overview');
 ?>
 <div class="grid">
@@ -65,7 +65,7 @@ render_header('Overview', 'overview');
   </form>
 </div>
 <div class="split">
-  <div class="card"><h3>Recent Support Tickets</h3><?php if (!$recentTickets): ?><p class="muted">No support tickets logged yet.</p><?php else: ?><table><thead><tr><th>Ref</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead><tbody><?php foreach ($recentTickets as $ticket): ?><tr><td><a href="/tickets.php?id=<?= (int)$ticket['id'] ?>"><?= e($ticket['ticket_ref']) ?></a></td><td><?= e($ticket['subject']) ?></td><td><?= e($ticket['full_name'] ?: $ticket['email'] ?: 'Unassigned') ?></td><td><span class="badge"><?= e($ticket['status']) ?></span></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
+  <div class="card"><h3>Recent Support Tickets</h3><?php if (!$recentTickets): ?><p class="muted">No support tickets logged yet.</p><?php else: ?><table><thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead><tbody><?php foreach ($recentTickets as $ticket): ?><tr><td><a href="tickets.php?id=<?= (int)$ticket['id'] ?>">#<?= (int)$ticket['id'] ?></a></td><td><?= e($ticket['subject']) ?></td><td><?= e($ticket['full_name'] ?: $ticket['email'] ?: 'Unassigned') ?></td><td><span class="badge"><?= e($ticket['status']) ?></span></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
   <div class="card"><h3>Recent Admin Audit Events</h3><?php if (!$recentAudits): ?><p class="muted">No audit events recorded yet.</p><?php else: ?><table><thead><tr><th>Action</th><th>By</th><th>Detail</th></tr></thead><tbody><?php foreach ($recentAudits as $audit): ?><tr><td><?= e($audit['action']) ?></td><td><?= e($audit['full_name'] ?: 'System') ?></td><td class="muted"><?= e(format_audit_detail($audit['detail'] ?? null)) ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
 </div>
 <?php render_footer(); ?>
