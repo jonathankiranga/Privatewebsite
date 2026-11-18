@@ -46,8 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $mailAccepted = admin_send_mail($email, 'Reset your SmartNow administrator password', "A password reset was requested for your SmartNow administrator account.\n\nUse this one-time link within one hour:\n".$url."\n\nIf you did not request this change, you can ignore this message.");
                 if (!$mailAccepted) {
-                    $lastError = error_get_last();
-                    error_log('SmartNow administrator password reset SMTP delivery failed for admin ID '.$adminId.'. SMTP error: '.($lastError['message'] ?? 'No PHP error details available').'.');
+                    error_log('SmartNow administrator password reset SMTP delivery failed for admin ID '.$adminId.'. See the PHPMailer SMTP diagnostic immediately before this entry.');
                 } else {
                     error_log('SmartNow administrator password reset SMTP server accepted the message for admin ID '.$adminId.'. This confirms SMTP server acceptance, not final delivery to the recipient's inbox.');
                 }
