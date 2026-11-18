@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'save_
         $stmt = db()->prepare("INSERT INTO site_settings (setting_key, setting_value, updated_by) VALUES ('office_location', ?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_by = VALUES(updated_by)");
         $stmt->bind_param('si', $officeLocation, $adminId);
         $stmt->execute();
-        log_admin_audit('site_setting.updated', 'site_settings', 0, ['key' => 'office_location', 'value' => $officeLocation]);
+        audit_event('site_setting.updated', 'site_settings', 0, ['key' => 'office_location', 'value' => $officeLocation]);
         $officeMessage = 'Office location updated on the website.';
     }
 }
@@ -43,7 +43,7 @@ $counts = [
 ];
 $recentTickets = db()->query('SELECT t.id, t.subject, t.priority, t.status, t.created_at, c.contact_name AS full_name, c.email FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id = t.customer_id ORDER BY t.created_at DESC LIMIT 6')->fetch_all(MYSQLI_ASSOC);
 $recentAudits = db()->query('SELECT a.event_type AS action, a.entity_type, a.entity_id, a.details_json AS detail, a.created_at, u.display_name AS full_name FROM admin_audit_events a LEFT JOIN admin_users u ON u.id = a.admin_user_id ORDER BY a.created_at DESC LIMIT 8')->fetch_all(MYSQLI_ASSOC);
-render_header('Overview', 'overview');
+page_header('Overview');
 ?>
 <div class="grid">
   <div class="card"><div class="muted">Products</div><div class="kpi"><?= $counts['products'] ?></div></div>
@@ -68,4 +68,4 @@ render_header('Overview', 'overview');
   <div class="card"><h3>Recent Support Tickets</h3><?php if (!$recentTickets): ?><p class="muted">No support tickets logged yet.</p><?php else: ?><table><thead><tr><th>Ticket</th><th>Subject</th><th>Customer</th><th>Status</th></tr></thead><tbody><?php foreach ($recentTickets as $ticket): ?><tr><td><a href="tickets.php?id=<?= (int)$ticket['id'] ?>">#<?= (int)$ticket['id'] ?></a></td><td><?= e($ticket['subject']) ?></td><td><?= e($ticket['full_name'] ?: $ticket['email'] ?: 'Unassigned') ?></td><td><span class="badge"><?= e($ticket['status']) ?></span></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
   <div class="card"><h3>Recent Admin Audit Events</h3><?php if (!$recentAudits): ?><p class="muted">No audit events recorded yet.</p><?php else: ?><table><thead><tr><th>Action</th><th>By</th><th>Detail</th></tr></thead><tbody><?php foreach ($recentAudits as $audit): ?><tr><td><?= e($audit['action']) ?></td><td><?= e($audit['full_name'] ?: 'System') ?></td><td class="muted"><?= e(format_audit_detail($audit['detail'] ?? null)) ?></td></tr><?php endforeach; ?></tbody></table><?php endif; ?></div>
 </div>
-<?php render_footer(); ?>
+<?php page_footer(); ?>
