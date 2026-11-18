@@ -22,12 +22,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $record->bind_param('ss', $emailHash, $ipHash);
     $record->execute();
 
-    if ($allowed && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!$allowed) {
+        error_log('SmartNow administrator password recovery request throttled. IP hash: '.$ipHash.'.');
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        error_log('SmartNow administrator password recovery received an invalid email format.');
+    } else {
         $stmt = db()->prepare('SELECT id FROM admin_users WHERE email=? AND is_active=1 LIMIT 1');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $admin = $stmt->get_result()->fetch_assoc();
-        if ($admin) {
+        if (!$admin) {
+            error_log('SmartNow administrator password recovery: no active administrator matched the submitted email hash '.$emailHash.'.');
+        } else {
             $token = bin2hex(random_bytes(32));
             $tokenHash = hash('sha256', $token);
             $adminId = (int)$admin['id'];
@@ -35,8 +41,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $save->bind_param('si', $tokenHash, $adminId);
             $save->execute();
             $url = admin_portal_url('admin-reset.php', $token);
-            if ($url && !admin_send_mail($email, 'Reset your SmartNow administrator password', "A password reset was requested for your SmartNow administrator account.\n\nUse this one-time link within one hour:\n".$url."\n\nIf you did not request this change, you can ignore this message.")) {
-                error_log('SmartNow administrator password reset email could not be sent for admin ID '.$adminId.'.');
+            if (!$url) {
+                error_log('SmartNow administrator password recovery stopped: reset URL could not be generated for admin ID '.$adminId.'.');
+            } else {
+                $mailAccepted = admin_send_mail($email, 'Reset your SmartNow administrator password', "A password reset was requested for your SmartNow administrator account.\n\nUse this one-time link within one hour:\n".$url."\n\nIf you did not request this change, you can ignore this message.");
+                if (!$mailAccepted) {
+                    $lastError = error_get_last();
+                    error_log('SmartNow administrator password reset mail() returned false for admin ID '.$adminId.'. PHP mail error: '.($lastError['message'] ?? 'No PHP error details available').'.');
+                } else {
+                    error_log('SmartNow administrator password reset mail() returned true for admin ID '.$adminId.'. This means the local mail transport accepted the message; it does not confirm final delivery.');
+                }
             }
         }
     }
