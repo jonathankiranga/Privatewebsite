@@ -1,13 +1,16 @@
 <?php
 declare(strict_types=1);
 
-$platformComposerAutoload = dirname(__DIR__) . '/vendor/autoload.php';
-if (is_file($platformComposerAutoload)) {
-    require_once $platformComposerAutoload;
-}
+/*
+ * PHPMailer 6.9.3 is bundled in this repository. No Composer autoloader,
+ * vendor directory, shell access or runtime download is required.
+ */
+require_once __DIR__ . '/../libraries/PHPMailer/src/Exception.php';
+require_once __DIR__ . '/../libraries/PHPMailer/src/PHPMailer.php';
+require_once __DIR__ . '/../libraries/PHPMailer/src/SMTP.php';
 
 /**
- * Send all platform notifications through the configured authenticated SMTP
+ * Send platform notifications through the configured authenticated SMTP
  * account. There is deliberately no PHP mail() fallback.
  */
 function platform_send_mail(string $to, string $subject, string $body, string $fromName = 'SmarterNow'): bool
@@ -19,8 +22,8 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
     $port = (int)getenv('SMARTNOW_SMTP_PORT');
     $encryption = strtolower(trim((string)getenv('SMARTNOW_SMTP_ENCRYPTION')));
 
-    if (!class_exists(\PHPMailer\PHPMailer\PHPMailer::class)) {
-        error_log('SmarterNow email unavailable: PHPMailer is not installed. Run Composer install in platform-admin/.');
+    if (!class_exists(\\PHPMailer\\PHPMailer\\PHPMailer::class)) {
+        error_log('SmarterNow email unavailable: bundled PHPMailer classes could not be loaded.');
         return false;
     }
     if (!filter_var($to, FILTER_VALIDATE_EMAIL) || !filter_var($from, FILTER_VALIDATE_EMAIL) ||
@@ -30,7 +33,7 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         return false;
     }
 
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    $mail = new \\PHPMailer\\PHPMailer\\PHPMailer(true);
     try {
         $mail->isSMTP();
         $mail->Host = $host;
@@ -38,8 +41,8 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         $mail->Username = $username;
         $mail->Password = $password;
         $mail->SMTPSecure = $encryption === 'ssl'
-            ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
-            : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            ? \\PHPMailer\\PHPMailer\\PHPMailer::ENCRYPTION_SMTPS
+            : \\PHPMailer\\PHPMailer\\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = $port;
         $mail->CharSet = 'UTF-8';
         $mail->isHTML(false);
@@ -50,10 +53,10 @@ function platform_send_mail(string $to, string $subject, string $body, string $f
         $mail->Subject = $subject;
         $mail->Body = $body;
         $mail->send();
-        error_log('SmarterNow SMTP server accepted an email for delivery to recipient hash '.hash('sha256', strtolower($to)).'.');
+        error_log('SmarterNow SMTP server accepted an email for recipient hash ' . hash('sha256', strtolower($to)) . '.');
         return true;
-    } catch (\Throwable $e) {
-        error_log('SmarterNow SMTP delivery failed: '.($mail->ErrorInfo !== '' ? $mail->ErrorInfo : $e->getMessage()));
+    } catch (\\Throwable $e) {
+        error_log('SmarterNow SMTP delivery failed: ' . ($mail->ErrorInfo !== '' ? $mail->ErrorInfo : $e->getMessage()));
         return false;
     }
 }
