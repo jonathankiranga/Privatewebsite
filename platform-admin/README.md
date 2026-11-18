@@ -30,7 +30,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
        'SMARTNOW_MAIL_FROM' => 'support@smarternowhosting.co.ke',
        'SMARTNOW_SUPPORT_EMAIL' => 'support@smarternowhosting.co.ke',
        'SMARTNOW_ANALYTICS_SECRET' => 'REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS',
-       'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://cpanel.smarternowhosting.co.ke'
+       'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke'
    ];
    ```
    The application loads this private file automatically for the admin, customer and public help-centre bootstraps. Hosting environment variables, when set to a non-empty value, take precedence over values in this file. The PHP process must be able to read the file; restrict directory/file permissions as tightly as your hosting account permits (for example directory `0750`, file `0640`).
