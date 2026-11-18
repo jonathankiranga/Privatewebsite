@@ -45,7 +45,8 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 12. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-13. From the `platform-admin` directory, run `composer install --no-dev --optimize-autoloader` to install PHPMailer into `platform-admin/vendor/`. Upload the generated `vendor/` directory together with the application if Composer is not available on the hosting account. Keep `vendor/` outside the public document root.\n14. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+13. From the `platform-admin` directory, run `composer install --no-dev --optimize-autoloader` to install PHPMailer into `platform-admin/vendor/`. Upload the generated `vendor/` directory together with the application if Composer is not available on the hosting account. Keep `vendor/` outside the public document root.
+14. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication with email-based, one-time password recovery links (one-hour expiry), request throttling, and forced invalidation of existing admin sessions after a reset.
