@@ -16,9 +16,9 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 5. Run the one-time migration `database/migrations/004_knowledge_base.sql`. It creates the published help-article store.
 6. Run the one-time migration `database/migrations/005_subscription_enquiries.sql`. It creates the plan catalogue and customer enquiry workflow; it does not create paid subscriptions.
 7. Run the one-time migration `database/migrations/006_analytics_and_public_submissions.sql`. It creates pseudonymous visitor event storage and public-form rate limiting. Back up the database before applying migrations.
-7. Create the private configuration directory outside the website's public document root. On this hosting account, use:
+8. Run the one-time migration `database/migrations/007_office_location.sql` if it has not already been applied.\n9. Run the one-time migration `database/migrations/008_admin_password_recovery.sql`. It adds one-time administrator reset tokens, reset-request throttling and an authentication version used to invalidate existing sessions after a password reset. Back up the database first.\n10. Create the private configuration directory outside the website's public document root. On this hosting account, use:
    `/home/smartern/private-config/`
-8. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
+11. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
    ```php
    <?php
    return [
@@ -30,17 +30,17 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
        'SMARTNOW_MAIL_FROM' => 'support@smarternowhosting.co.ke',
        'SMARTNOW_SUPPORT_EMAIL' => 'support@smarternowhosting.co.ke',
        'SMARTNOW_ANALYTICS_SECRET' => 'REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS',
-       'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke'
+       'SMARTNOW_CUSTOMER_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke',\n       'SMARTNOW_ADMIN_PORTAL_URL' => 'https://admin.smarternowhosting.co.ke'
    ];
    ```
    The application loads this private file automatically for the admin, customer and public help-centre bootstraps. Hosting environment variables, when set to a non-empty value, take precedence over values in this file. The PHP process must be able to read the file; restrict directory/file permissions as tightly as your hosting account permits (for example directory `0750`, file `0640`).
-9. From the project root, create the first administrator using the CLI:
+12. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-10. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+13. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
-- Password-hashed administrator authentication.
+- Password-hashed administrator authentication with email-based, one-time password recovery links (one-hour expiry), request throttling, and forced invalidation of existing admin sessions after a reset.
 - Server-side sessions with HttpOnly, SameSite and configurable Secure cookie.
 - CSRF-protected login, logout, product, customer and ticket forms.
 - Login throttling by account and IP using the database; only failed attempts count towards the threshold.
@@ -98,5 +98,5 @@ Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer applic
 Role checks are enforced server-side; hiding navigation links is not the security boundary. New administrator roles can be selected when creating an account; changing an existing administrator's role is not yet supported in the interface.
 
 
-## Customer account mail configuration
+## Administrator password recovery mail configuration\nAdministrator password recovery uses PHP `mail()` and the `SMARTNOW_ADMIN_PORTAL_URL` HTTPS base URL. Set that value to `https://admin.smarternowhosting.co.ke` in the private configuration file. Apply migration 008 before using the recovery pages. The same configured `SMARTNOW_MAIL_FROM` sender is used. Test delivery to an active administrator mailbox before relying on recovery.\n\n## Customer account mail configuration
 Customer verification and password-reset messages use PHP `mail()`. The hosting account must be configured to send mail for the address in `SMARTNOW_MAIL_FROM`; the sender address must pass SPF/DKIM/DMARC alignment for reliable delivery. `SMARTNOW_CUSTOMER_PORTAL_URL` must be the HTTPS base URL of the deployed customer portal. Do not enable public registration until a real mailbox has successfully received and completed verification and password-reset tests.
