@@ -20,7 +20,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   try{
    $temporary='PENDING-'.bin2hex(random_bytes(6));$status='issued';$balance=$total;
    $stmt=db()->prepare("INSERT INTO platform_invoices(invoice_number,customer_id,invoice_date,due_date,currency,subtotal,vat_rate,vat_amount,total_amount,amount_paid,balance_due,status,notes,company_details_json,customer_details_json,created_by) VALUES(?,?,?,?, 'KES',?,?,?, ?,0,?,?,?,?,?,?)");
-   $stmt->bind_param('sissdddddsssssi',$temporary,$customerId,$invoiceDate,$dueDate,$subtotal,$vatRate,$vatAmount,$total,$balance,$status,$notes,$companyJson,$customerJson,$adminId);
+   $stmt->bind_param('sissdddddssssi',$temporary,$customerId,$invoiceDate,$dueDate,$subtotal,$vatRate,$vatAmount,$total,$balance,$status,$notes,$companyJson,$customerJson,$adminId);
    $stmt->execute();$invoiceId=(int)db()->insert_id;$number=$prefix.'-'.date('Y',strtotime($invoiceDate)).'-'.str_pad((string)$invoiceId,6,'0',STR_PAD_LEFT);
    $up=db()->prepare('UPDATE platform_invoices SET invoice_number=? WHERE id=?');$up->bind_param('si',$number,$invoiceId);$up->execute();
    $li=db()->prepare('INSERT INTO platform_invoice_items(invoice_id,description,quantity,unit_price,line_total,sort_order) VALUES(?,?,?,?,?,?)');
