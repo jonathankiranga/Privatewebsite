@@ -5,7 +5,7 @@ CREATE TABLE platform_invoice_settings (
  address TEXT NULL, city VARCHAR(120) NOT NULL DEFAULT '', country VARCHAR(100) NOT NULL DEFAULT 'Kenya',
  phone VARCHAR(60) NOT NULL DEFAULT '', email VARCHAR(190) NOT NULL DEFAULT '', website VARCHAR(255) NOT NULL DEFAULT '',
  mpesa_till_number VARCHAR(40) NOT NULL DEFAULT '', mpesa_till_name VARCHAR(190) NOT NULL DEFAULT '',
- mpesa_account_reference VARCHAR(100) NOT NULL DEFAULT '', payment_terms VARCHAR(500) NOT NULL DEFAULT 'Payment due within 7 days.',
+ mpesa_account_reference VARCHAR(100) NOT NULL DEFAULT 'invoice_number', payment_terms VARCHAR(500) NOT NULL DEFAULT 'Payment due within 7 days.',
  invoice_prefix VARCHAR(20) NOT NULL DEFAULT 'INV', default_vat_rate DECIMAL(5,2) NOT NULL DEFAULT 0.00,
  updated_by BIGINT UNSIGNED NULL, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
  PRIMARY KEY(id), CONSTRAINT fk_invoice_settings_admin FOREIGN KEY(updated_by) REFERENCES admin_users(id) ON DELETE SET NULL
