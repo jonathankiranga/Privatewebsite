@@ -19,9 +19,9 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 8. Run the one-time migration `database/migrations/007_office_location.sql` if it has not already been applied.
 9. Run the one-time migration `database/migrations/008_admin_password_recovery.sql`. It adds one-time administrator reset tokens, reset-request throttling and an authentication version used to invalidate existing sessions after a password reset. Back up the database first.
 10. Run the one-time migration `database/migrations/009_invoicing.sql`. It creates invoice settings, invoice headers, invoice lines and manually recorded payments. Back up the database first. Configure the legal company details, KRA/VAT PINs and M-Pesa Till number under Billing → Invoice settings before issuing invoices.
-10. Create the private configuration directory outside the website's public document root. On this hosting account, use:
+11. Create the private configuration directory outside the website's public document root. On this hosting account, use:
    `/home/smartern/private-config/`
-11. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
+12. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
    ```php
    <?php
    return [
@@ -43,11 +43,11 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
    ];
    ```
    The application loads this private file automatically for the admin, customer and public help-centre bootstraps. Hosting environment variables, when set to a non-empty value, take precedence over values in this file. The PHP process must be able to read the file; restrict directory/file permissions as tightly as your hosting account permits (for example directory `0750`, file `0640`).
-12. From the project root, create the first administrator using the CLI:
+13. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-13. PHPMailer 6.9.3 is bundled under `libraries/PHPMailer/src/`. No Composer installation, `vendor/` directory, SSH, Terminal or runtime download is required. Upload the complete `platform-admin/` directory, including `libraries/PHPMailer/`.
-14. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+14. PHPMailer 6.9.3 is bundled under `libraries/PHPMailer/src/`. No Composer installation, `vendor/` directory, SSH, Terminal or runtime download is required. Upload the complete `platform-admin/` directory, including `libraries/PHPMailer/`.
+15. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication with email-based, one-time password recovery links (one-hour expiry), request throttling, and forced invalidation of existing admin sessions after a reset.
