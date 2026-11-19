@@ -30,7 +30,7 @@ page_header('Invoice settings');
 <div><label>City / County</label><input name="city" maxlength="120" value="<?=e($d['city']??'')?>"></div><div><label>Country</label><input name="country" maxlength="100" value="<?=e($d['country']??'Kenya')?>"></div>
 </div></div>
 <div class="panel"><h2>M-Pesa and payment instructions</h2><div class="form-grid">
-<div><label>M-Pesa Buy Goods Till number</label><input name="mpesa_till_number" maxlength="40" value="<?=e($d['mpesa_till_number']??'')?>" placeholder="Your official Till number"></div>
+<div><label>M-Pesa Buy Goods Till number</label><input name="mpesa_till_number" maxlength="40" required value="<?=e($d['mpesa_till_number']??'')?>" placeholder="Your official Till number"></div>
 <div><label>Till / business display name</label><input name="mpesa_till_name" maxlength="190" value="<?=e($d['mpesa_till_name']??'')?>"></div>
 <div><label>Account / payment reference</label><input name="mpesa_account_reference" maxlength="100" value="<?=e($d['mpesa_account_reference']??'invoice_number')?>" placeholder="Use invoice_number for invoice-specific references"></div>
 <div><label>Default VAT rate (%)</label><input name="default_vat_rate" inputmode="decimal" value="<?=e($d['default_vat_rate']??'0.00')?>"></div>
