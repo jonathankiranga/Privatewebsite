@@ -4,7 +4,7 @@ require dirname(__DIR__) . '/src/layout.php';
 require_roles(['owner','administrator']);
 $error='';
 $settings=db()->query('SELECT * FROM platform_invoice_settings WHERE id=1')->fetch_assoc();
-if(!$settings||trim($settings['legal_name'])===''){page_header('Create invoice');echo '<div class="notice error">Configure your registered company details first. <a href="invoice-settings.php">Open invoice settings</a>.</div>';page_footer();exit;}
+if(!$settings||trim($settings['legal_name'])===''||trim($settings['mpesa_till_number'])===''){page_header('Create invoice');echo '<div class="notice error">Complete your registered company details and M-Pesa Till number before issuing invoices. <a href="invoice-settings.php">Open invoice settings</a>.</div>';page_footer();exit;}
 if($_SERVER['REQUEST_METHOD']==='POST'){
  verify_csrf();$customerId=(int)($_POST['customer_id']??0);$invoiceDate=trim((string)($_POST['invoice_date']??date('Y-m-d')));$dueDate=trim((string)($_POST['due_date']??''));$vatInput=trim((string)($_POST['vat_rate']??$settings['default_vat_rate']));$notes=trim((string)($_POST['notes']??''));
  $descriptions=is_array($_POST['description']??null)?$_POST['description']:[];$quantities=is_array($_POST['quantity']??null)?$_POST['quantity']:[];$prices=is_array($_POST['unit_price']??null)?$_POST['unit_price']:[];$items=[];$subtotal=0.0;
