@@ -18,6 +18,7 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 7. Run the one-time migration `database/migrations/006_analytics_and_public_submissions.sql`. It creates pseudonymous visitor event storage and public-form rate limiting. Back up the database before applying migrations.
 8. Run the one-time migration `database/migrations/007_office_location.sql` if it has not already been applied.
 9. Run the one-time migration `database/migrations/008_admin_password_recovery.sql`. It adds one-time administrator reset tokens, reset-request throttling and an authentication version used to invalidate existing sessions after a password reset. Back up the database first.
+10. Run the one-time migration `database/migrations/009_invoicing.sql`. It creates invoice settings, invoice headers, invoice lines and manually recorded payments. Back up the database first. Configure the legal company details, KRA/VAT PINs and M-Pesa Till number under Billing → Invoice settings before issuing invoices.
 10. Create the private configuration directory outside the website's public document root. On this hosting account, use:
    `/home/smartern/private-config/`
 11. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
@@ -71,12 +72,15 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Consent-based first-party website analytics for page views, pseudonymous visitors, referring hosts, device class and browser family.
 - Public website submission form for support questions, bug reports and feature suggestions, routed into the administrator support queue with spam controls.
 - Product catalogue administration (create, edit and change publication status).
+- Customer invoicing in KES with sequential invoice numbers, customer and company detail snapshots, line items, configurable VAT, due dates, print / Save PDF layout, outstanding balances and audit events.
+- Company billing profile and M-Pesa Buy Goods Till configuration, printed on invoices.
+- Manual payment recording for M-Pesa, bank, cash or other methods, including transaction references, payment history and automatic invoice balance/status updates. Payment recording is not an automatic Safaricom confirmation.
 - Customer directory (create, edit, search and change record status, with contact person, phone, country code, organisation and internal notes).
 - Support queue (filter, classify, prioritise, assign to an active administrator and update tickets).
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer application access provisioning, public feature voting and referral tracking are not working features yet. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery uses authenticated SMTP through PHPMailer; test verification and password-reset delivery before opening registration publicly. They must be designed, implemented and tested before being advertised or used. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Paid subscription lifecycle, automated M-Pesa STK push/validation and callback reconciliation, refunds, customer application access provisioning, public feature voting and referral tracking are not implemented. Invoicing and manual payment recording are separate functions; an administrator must verify an M-Pesa payment independently before recording its receipt reference. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery uses authenticated SMTP through PHPMailer; test verification and password-reset delivery before opening registration publicly. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
 
 ## Analytics and public submissions setup
 - Apply migration 006 after migrations 002–005.
@@ -99,8 +103,8 @@ Paid subscription lifecycle, payment collection/M-Pesa, refunds, customer applic
 
 
 ## Administrator roles
-- `owner`: full access to the currently implemented administration areas.
-- `administrator`: product, customer and support management.
+- `owner`: full access to the currently implemented administration areas, including invoices and invoice settings.
+- `administrator`: product, customer, support and invoicing management.
 - `support`: read-only customer directory and support-ticket management; cannot change customer records or manage products.
 - `content`: product catalogue, subscription plan and knowledge base management.
 
