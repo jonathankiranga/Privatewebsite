@@ -1,0 +1,20 @@
+<?php
+require dirname(__DIR__) . '/src/bootstrap.php';
+require dirname(__DIR__) . '/src/layout.php';
+require_roles(['owner','administrator']);
+$filter=(string)($_GET['status']??'');$valid=['issued','part_paid','paid','overdue','void'];
+$sql="SELECT i.id,i.invoice_number,i.invoice_date,i.due_date,i.total_amount,i.amount_paid,i.balance_due,i.status,c.organisation_name,c.contact_name,c.email FROM platform_invoices i INNER JOIN platform_customers c ON c.id=i.customer_id";
+if($filter==='overdue'){$invoices=db()->query("SELECT i.id,i.invoice_number,i.invoice_date,i.due_date,i.total_amount,i.amount_paid,i.balance_due,'overdue' AS status,c.organisation_name,c.contact_name,c.email FROM platform_invoices i INNER JOIN platform_customers c ON c.id=i.customer_id WHERE i.status<>'void' AND i.balance_due>0 AND i.due_date<CURDATE() ORDER BY i.invoice_date DESC,i.id DESC LIMIT 300");}
+elseif(in_array($filter,$valid,true)){$st=db()->prepare($sql." WHERE i.status=? ORDER BY i.invoice_date DESC,i.id DESC LIMIT 300");$st->bind_param('s',$filter);$st->execute();$invoices=$st->get_result();}
+else{$invoices=db()->query($sql." ORDER BY i.invoice_date DESC,i.id DESC LIMIT 300");}
+$summary=db()->query("SELECT COUNT(*) invoice_count,COALESCE(SUM(IF(status<>'void',total_amount,0)),0) invoiced,COALESCE(SUM(IF(status<>'void',amount_paid,0)),0) received,COALESCE(SUM(IF(status<>'void',balance_due,0)),0) outstanding FROM platform_invoices")->fetch_assoc();
+page_header('Invoices');
+?>
+<div class="eyebrow">Accounts receivable</div><h1 class="heading">Invoices</h1><p class="sub">Issue customer invoices, track balances and record payments received through M-Pesa, bank or cash.</p>
+<div class="cards"><div class="card"><div class="label">Invoices</div><div class="metric"><?=(int)$summary['invoice_count']?></div></div><div class="card"><div class="label">Total invoiced</div><div class="metric" style="font-size:23px">KES <?=number_format((float)$summary['invoiced'],2)?></div></div><div class="card"><div class="label">Payments received</div><div class="metric" style="font-size:23px">KES <?=number_format((float)$summary['received'],2)?></div></div><div class="card"><div class="label">Outstanding</div><div class="metric" style="font-size:23px">KES <?=number_format((float)$summary['outstanding'],2)?></div></div></div>
+<div class="panel"><div class="actions" style="justify-content:space-between;flex-wrap:wrap"><h2>Invoice register</h2><div class="actions"><a class="btn secondary" href="invoice-settings.php">Company / M-Pesa settings</a><a class="btn" href="invoice-create.php">Create invoice</a></div></div>
+<form method="get" class="actions" style="margin:0 0 14px"><select name="status" style="max-width:220px"><option value="">All invoices</option><?php foreach(['issued'=>'Issued','part_paid'=>'Part paid','paid'=>'Paid','overdue'=>'Overdue','void'=>'Void'] as $v=>$label):?><option value="<?=e($v)?>" <?=$filter===$v?'selected':''?>><?=e($label)?></option><?php endforeach;?></select><button class="btn secondary">Filter</button></form>
+<div style="overflow-x:auto"><table><thead><tr><th>Invoice</th><th>Customer</th><th>Dates</th><th>Total</th><th>Balance</th><th>Status</th><th></th></tr></thead><tbody>
+<?php if($invoices->num_rows):while($i=$invoices->fetch_assoc()):$status=$i['status'];if(!in_array($status,['paid','void'],true)&&(float)$i['balance_due']>0&&$i['due_date']<date('Y-m-d'))$status='overdue';?><tr><td><strong><?=e($i['invoice_number'])?></strong></td><td><?=e($i['organisation_name']?:$i['contact_name']?:$i['email'])?><br><span class="label"><?=e($i['email'])?></span></td><td><?=e($i['invoice_date'])?><br><span class="label">Due <?=e($i['due_date'])?></span></td><td>KES <?=number_format((float)$i['total_amount'],2)?></td><td>KES <?=number_format((float)$i['balance_due'],2)?></td><td><?=e(ucfirst(str_replace('_',' ',$status)))?></td><td><a class="btn secondary" href="invoice.php?id=<?=(int)$i['id']?>">Open</a></td></tr><?php endwhile;else:?><tr><td colspan="7" class="empty">No invoices found.</td></tr><?php endif;?>
+</tbody></table></div></div>
+<?php page_footer(); ?>
