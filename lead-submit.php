@@ -16,8 +16,17 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   else{
    $productIdForDb=$productId>0?$productId:null;$source='website';$status='new';$priority='normal';
    $db=public_db();
+   $secret=(string)getenv('SMARTNOW_ANALYTICS_SECRET');
+   if(strlen($secret)<32){$error='The enquiry service is not configured yet. Please try again later.';}
+   else{
+    $emailHash=hash_hmac('sha256',$email,$secret);$ipHash=hash_hmac('sha256',(string)($_SERVER['REMOTE_ADDR']??''),$secret);
+    $rate=$db->prepare('SELECT COUNT(*) AS total FROM platform_public_submission_limits WHERE (email_hash=? OR ip_hash=?) AND created_at>DATE_SUB(NOW(),INTERVAL 1 DAY)');
+    $rate->bind_param('ss',$emailHash,$ipHash);$rate->execute();$count=(int)$rate->get_result()->fetch_assoc()['total'];
+    if($count>=5){$error='You have reached the daily enquiry limit. Please contact our team directly.';}
+    else{
    try{
     $db->begin_transaction();
+    $limit=$db->prepare('INSERT INTO platform_public_submission_limits(email_hash,ip_hash) VALUES(?,?)');$limit->bind_param('ss',$emailHash,$ipHash);$limit->execute();
     $stmt=$db->prepare("INSERT INTO platform_leads(name,email,phone,organisation,product_id,source,subject,message,status,priority) VALUES(?,?,?,?,?,?,?,?,'new','normal')");
     $stmt->bind_param('ssssisss',$name,$email,$phone,$org,$productIdForDb,$source,$subject,$message);$stmt->execute();$leadId=(int)$db->insert_id;
     $stmt=$db->prepare("INSERT INTO platform_lead_activities(lead_id,activity_type,subject,details) VALUES(?,'note','Website enquiry received',?)");
@@ -26,6 +35,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     if(filter_var($support,FILTER_VALIDATE_EMAIL)){platform_send_mail($support,'New sales lead #'.$leadId.' - '.$subject,"A new website lead has been received.\n\nName: $name\nEmail: $email\nPhone: $phone\nOrganisation: $org\nSubject: $subject\nProduct ID: $productId\n\n$message\n\nOpen the admin portal and select Leads to follow up.",'SmarterNow Website');}
     unset($_SESSION['lead_csrf']);header('Location: lead-submit.php?sent=1');exit;
    }catch(Throwable $e){$db->rollback();error_log('Website lead capture failed: '.$e->getMessage());$error='Your request could not be submitted. Please try again later.';}
+    }
+   }
   }
  }
 }
