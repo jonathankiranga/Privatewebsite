@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://smarternowhosting.co.ke/sitemap.xml
+Sitemap: https://smarternowhosting.co.ke/product-sitemap.php
