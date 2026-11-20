@@ -16,7 +16,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
   try{
    db()->begin_transaction();
    $stmt=db()->prepare('INSERT INTO platform_proposals(lead_id,customer_id,proposal_number,public_token,title,recipient_name,recipient_email,recipient_organisation,recipient_phone,company_details_json,introduction,scope_of_work,assumptions,terms,currency,subtotal,discount_amount,vat_rate,vat_amount,total_amount,valid_until,status,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
-   $stmt->bind_param('iisssssssssssssdddd dssi',$leadDb,$customerId,$temporary,$token,$title,$recipientName,$recipientEmail,$organisation,$phone,$companyJson,$intro,$scope,$assumptions,$terms,$currency,$subtotal,$discount,$vat,$vatAmount,$total,$validDb,$status,$adminId);
+   $stmt->bind_param('iisssssssssssssdddddssi',$leadDb,$customerId,$temporary,$token,$title,$recipientName,$recipientEmail,$organisation,$phone,$companyJson,$intro,$scope,$assumptions,$terms,$currency,$subtotal,$discount,$vat,$vatAmount,$total,$validDb,$status,$adminId);
    $stmt->execute();$proposalId=(int)db()->insert_id;$proposalNumber='SMD-PROP-'.date('Y').'-'.str_pad((string)$proposalId,5,'0',STR_PAD_LEFT);
    $u=db()->prepare('UPDATE platform_proposals SET proposal_number=? WHERE id=?');$u->bind_param('si',$proposalNumber,$proposalId);$u->execute();
    $productId=(int)($_POST['product_id']??0);$productDb=$productId>0?$productId:null;
