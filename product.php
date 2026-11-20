@@ -11,7 +11,7 @@ function product_lines($value): array { return array_values(array_filter(array_m
 function youtube_embed_id($url): string {
     $host=strtolower((string)parse_url($url,PHP_URL_HOST)); $path=(string)parse_url($url,PHP_URL_PATH); $id='';
     if ($host==='youtu.be') $id=trim($path,'/');
-    elseif (in_array($host,['youtube.com','www.youtube.com','m.youtube.com'],true)) {
+    elseif (in_array($host,['youtube.com','www.youtube.com','m.youtube.com','www.youtube-nocookie.com'],true)) {
         if (strpos($path,'/embed/')===0) $id=substr($path,7);
         elseif (strpos($path,'/shorts/')===0) $id=substr($path,8);
         else parse_str((string)parse_url($url,PHP_URL_QUERY),$q); if (isset($q['v'])) $id=(string)$q['v'];
