@@ -108,7 +108,7 @@ page_header('Website products');
 <div><label for="hero_image_url">Product image URL</label><input id="hero_image_url" name="hero_image_url" type="url" maxlength="500" value="<?= e($editing['hero_image_url'] ?? '') ?>" placeholder="https://..."></div>
 <div><label for="meta_title">SEO page title</label><input id="meta_title" name="meta_title" maxlength="190" value="<?= e($editing['meta_title'] ?? '') ?>"></div>
 <div><label for="meta_description">SEO description</label><textarea id="meta_description" name="meta_description" maxlength="320" rows="2"><?= e($editing['meta_description'] ?? '') ?></textarea></div>
-<div><label for="public_url">Public page URL (optional override)</label><input id="public_url" name="public_url" type="url" maxlength="500" value="<?= e($editing['public_url'] ?? '') ?>"></div>
+
 <div><label for="status">Publication status</label><select id="status" name="status"><?php foreach (['draft'=>'Draft','published'=>'Published','paused'=>'Paused','retired'=>'Retired'] as $v=>$label): ?><option value="<?= e($v) ?>" <?= (($editing['status'] ?? 'draft')===$v)?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select></div>
 <div><label for="sort_order">Display order</label><input id="sort_order" name="sort_order" type="number" value="<?= (int)($editing['sort_order'] ?? 0) ?>"></div>
 <div><label><input type="checkbox" name="is_featured" value="1" style="width:auto" <?= !empty($editing['is_featured'])?'checked':'' ?>> Feature this product</label></div>
