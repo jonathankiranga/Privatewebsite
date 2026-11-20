@@ -1,6 +1,6 @@
-# SmartNow Platform Administration
+# SmarterNow Platform Administration
 
-This is a separate PHP/MySQLi administration application for the SmartNow Data Venture platform. It is independent of the public static marketing site and does not modify any product application's operational database.
+This is a separate PHP/MySQLi administration application for the SmarterNow Data Venture platform. It is independent of the public static marketing site and does not modify any product application's operational database.
 
 ## Runtime
 - PHP 7.4 or later (PHP 8.x recommended), with MySQLi and the mysqlnd driver.
