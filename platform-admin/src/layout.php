@@ -22,6 +22,7 @@ function page_header(string $title): void
 <a href="index.php">Overview</a>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="products.php">Products</a><a href="plans.php">Plans</a><?php endif; ?>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator'], true)): ?><a href="enquiries.php">Plan enquiries</a><?php endif; ?>
+<?php if (in_array($admin['role'] ?? '', ['owner','administrator'], true)): ?><div class="muted">Sales</div><a href="leads.php">Leads</a><a href="proposals.php">Systems proposals</a><?php endif; ?>
 <?php if (($admin['role'] ?? '') === 'owner'): ?><a href="administrators.php">Administrators</a><?php endif; ?>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator','support'], true)): ?><a href="customers.php">Customers</a><a href="tickets.php">Support tickets</a><?php endif; ?>
 <?php if (in_array($admin['role'] ?? '', ['owner','administrator','content'], true)): ?><a href="knowledge-base.php">Knowledge base</a><?php endif; ?>
