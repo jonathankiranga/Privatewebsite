@@ -19,9 +19,10 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 8. Run the one-time migration `database/migrations/007_office_location.sql` if it has not already been applied.
 9. Run the one-time migration `database/migrations/008_admin_password_recovery.sql`. It adds one-time administrator reset tokens, reset-request throttling and an authentication version used to invalidate existing sessions after a password reset. Back up the database first.
 10. Run the one-time migration `database/migrations/009_invoicing.sql`. It creates invoice settings, invoice headers, invoice lines and manually recorded payments. Back up the database first. Configure the legal company details, KRA/VAT PINs and M-Pesa Till number under Billing → Invoice settings before issuing invoices.
-11. Create the private configuration directory outside the website's public document root. On this hosting account, use:
+11. Run the one-time migration `database/migrations/010_content_leads_proposals.sql`. It adds full product-page content fields, YouTube video links, sales leads and activity history, proposal documents and customer response tracking. Back up the database first. Do not run it before migration 009.
+12. Create the private configuration directory outside the website's public document root. On this hosting account, use:
    `/home/smartern/private-config/`
-12. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
+13. Create `/home/smartern/private-config/platform-admin.php` with the following PHP array. Replace every placeholder with the actual hosting/database value; do not commit this file to Git:
    ```php
    <?php
    return [
@@ -43,11 +44,11 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
    ];
    ```
    The application loads this private file automatically for the admin, customer and public help-centre bootstraps. Hosting environment variables, when set to a non-empty value, take precedence over values in this file. The PHP process must be able to read the file; restrict directory/file permissions as tightly as your hosting account permits (for example directory `0750`, file `0640`).
-13. From the project root, create the first administrator using the CLI:
+14. From the project root, create the first administrator using the CLI:
    `php bin/create-admin.php admin@example.com`
    The command prompts for a password; no default credentials are created.
-14. PHPMailer 6.9.3 is bundled under `libraries/PHPMailer/src/`. No Composer installation, `vendor/` directory, SSH, Terminal or runtime download is required. Upload the complete `platform-admin/` directory, including `libraries/PHPMailer/`.
-15. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
+15. PHPMailer 6.9.3 is bundled under `libraries/PHPMailer/src/`. No Composer installation, `vendor/` directory, SSH, Terminal or runtime download is required. Upload the complete `platform-admin/` directory, including `libraries/PHPMailer/`.
+16. Point the subdomain document root to `platform-admin/public`, enable HTTPS, and visit `/login.php`.
 
 ## Implemented
 - Password-hashed administrator authentication with email-based, one-time password recovery links (one-hour expiry), request throttling, and forced invalidation of existing admin sessions after a reset.
@@ -67,11 +68,13 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Subscription plan catalogue with administrator-entered pricing and terms, plus customer plan enquiries and an administrator sales pipeline. Enquiries do not create subscriptions or grant access.
 - Email notifications to the configured support inbox for new customer requests and replies, and to customers for public administrator replies and status changes.
 - Administrator status and role are refreshed from the database on each protected request, so deactivated accounts lose access on their next request.
-- Role-based page access: owners and administrators manage products and customer records; content administrators manage the product catalogue, plans and knowledge base; support administrators access customer records read-only and manage support tickets.
+- Role-based page access: owners and administrators manage products, leads, proposals and customer records; content administrators manage product content, plans and the knowledge base; support administrators access customer records read-only and manage support tickets.
 - Dashboard counts from actual database records.
 - Consent-based first-party website analytics for page views, pseudonymous visitors, referring hosts, device class and browser family.
 - Public website submission form for support questions, bug reports and feature suggestions, routed into the administrator support queue with spam controls.
-- Product catalogue administration (create, edit and change publication status).
+- Website product CMS: create, edit, publish, pause or retire products; manage headline, full description, features, benefits, target audience, product image URL, SEO metadata, display order and YouTube demonstration URL. Published products are loaded into the public homepage catalogue and served on database-driven product pages; no HTML/PHP edits are needed for routine content changes.
+- Sales lead management: public proposal-request forms and administrator-created leads, assignment, priority, pipeline status, estimated value, follow-up dates, call/email/meeting notes and activity history.
+- Systems proposals: create a customer-specific proposal from a lead, add a priced line item, discount and VAT, use the configured company profile, print / Save PDF, send through authenticated PHPMailer SMTP and track accepted/rejected customer responses through a secure proposal link. SMTP acceptance is not proof of final inbox delivery.
 - Customer invoicing in KES with sequential invoice numbers, customer and company detail snapshots, line items, configurable VAT, due dates, print / Save PDF layout, outstanding balances and audit events.
 - Company billing profile and M-Pesa Buy Goods Till configuration, printed on invoices.
 - Manual payment recording for M-Pesa, bank, cash or other methods, including transaction references, payment history and automatic invoice balance/status updates. Payment recording is not an automatic Safaricom confirmation.
@@ -80,7 +83,15 @@ This is a separate PHP/MySQLi administration application for the SmartNow Data V
 - Ticket conversation history with administrator replies and internal notes.
 
 ## Not yet implemented
-Paid subscription lifecycle, automated M-Pesa STK push/validation and callback reconciliation, refunds, customer application access provisioning, public feature voting and referral tracking are not implemented. Invoicing and manual payment recording are separate functions; an administrator must verify an M-Pesa payment independently before recording its receipt reference. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery uses authenticated SMTP through PHPMailer; test verification and password-reset delivery before opening registration publicly. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+Paid subscription lifecycle, automated M-Pesa STK push/validation and callback reconciliation, refunds, customer application access provisioning, public feature voting and referral tracking are not implemented. Proposal creation currently supports one commercial line item per proposal; additional line-item editing is not yet available. Product image management currently accepts an externally hosted HTTPS image URL rather than uploading image files. Invoicing and manual payment recording are separate functions; an administrator must verify an M-Pesa payment independently before recording its receipt reference. Visitor analytics and the public submission form require migration 006 and the tracking script; analytics is consent-dependent. Customer email delivery uses authenticated SMTP through PHPMailer; test verification and password-reset delivery before opening registration publicly. Customer contact profiles are stored in `platform_customers`; login credentials and verification state are stored separately in `platform_customer_accounts`. No integration with the existing School, ERP, LIMS or POS databases is made here.
+
+## Website content, leads and proposals
+- Apply migration 010 after migrations 002–009.
+- Use Products in the admin panel to manage the published product catalogue. Published entries appear on the homepage through `products-feed.php` and open through `product.php?slug=...`.
+- Paste a YouTube watch, youtu.be or supported YouTube URL in a product's YouTube field. The public product page embeds the video using YouTube's privacy-enhanced `youtube-nocookie.com` host.
+- Website proposal requests are stored in the sales Leads area. Administrators can assign a lead, set a follow-up date, record call/email/meeting notes and prepare a proposal.
+- Proposal emails use the existing authenticated SMTP mailbox configured by `SMARTNOW_MAIL_FROM` and the `SMARTNOW_SMTP_*` settings. Customer accept/decline responses are recorded against the proposal and lead.
+- Company legal and contact details in proposals are snapshotted from Billing → Invoice settings when the proposal is created. Complete those settings before preparing customer proposals.
 
 ## Analytics and public submissions setup
 - Apply migration 006 after migrations 002–005.
