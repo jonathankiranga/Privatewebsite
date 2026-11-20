@@ -87,7 +87,7 @@ Paid subscription lifecycle, automated M-Pesa STK push/validation and callback r
 
 ## Website content, leads and proposals
 - Apply migration 010 after migrations 002–009.
-- Use Products in the admin panel to manage the published product catalogue. Published entries appear on the homepage through `products-feed.php` and open through `product.php?slug=...`.
+- Use Products in the admin panel to manage the published product catalogue. Migration 010 seeds the seven current website offerings so they are editable immediately. Published entries appear on the homepage through `products-feed.php` and open through `product.php?slug=...`; the existing product URLs route to the managed pages (the three POS offerings use a shared POS overview).
 - Paste a YouTube watch, youtu.be or supported YouTube URL in a product's YouTube field. The public product page embeds the video using YouTube's privacy-enhanced `youtube-nocookie.com` host.
 - Website proposal requests are stored in the sales Leads area. Administrators can assign a lead, set a follow-up date, record call/email/meeting notes and prepare a proposal.
 - Proposal emails use the existing authenticated SMTP mailbox configured by `SMARTNOW_MAIL_FROM` and the `SMARTNOW_SMTP_*` settings. Customer accept/decline responses are recorded against the proposal and lead.
