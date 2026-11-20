@@ -13,6 +13,8 @@ if($leadId>0){
     if(!$lead){http_response_code(404);exit('Lead not found.');}
 }
 $products=db()->query("SELECT id,name FROM platform_products WHERE status='published' ORDER BY name");
+$companySettings=db()->query('SELECT legal_name,trading_name,company_registration_no,kra_pin,vat_pin,address,city,country,phone,email,website,mpesa_till_number,mpesa_till_name FROM platform_invoice_settings WHERE id=1')->fetch_assoc();
+$companyReady=$companySettings&&trim((string)$companySettings['legal_name'])!=='';
 if($_SERVER['REQUEST_METHOD']==='POST'){
     verify_csrf();
     $title=trim((string)($_POST['title']??''));
@@ -52,8 +54,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         $lineItems[]=['description'=>$desc,'quantity'=>$qty,'unit_price'=>$price,'line_total'=>$lineTotal];
         $subtotal+=$lineTotal;
     }
-    if($error===''&&($title===''||strlen($title)>240||$recipientName===''||!filter_var($recipientEmail,FILTER_VALIDATE_EMAIL)||strlen($recipientName)>160||strlen($recipientEmail)>190||strlen($organisation)>190||strlen($phone)>60||strlen($currency)!==3||!preg_match('/^[A-Z]{3}$/',$currency)||!preg_match('/^\d{1,3}(\.\d{1,2})?$/',$vatInput)||$vat<0||$vat>100||!preg_match('/^\d{1,12}(\.\d{1,2})?$/',$discountInput)||$discount<0||count($lineItems)<1||strlen($intro)>20000||strlen($scope)>20000||strlen($assumptions)>10000||strlen($terms)>10000||($valid!==''&&!preg_match('/^\d{4}-\d{2}-\d{2}$/',$valid)))){
-        $error='Check the recipient details, proposal title, currency, VAT, discount and line items.';
+    if($error===''&&($title===''||strlen($title)>240||$recipientName===''||!filter_var($recipientEmail,FILTER_VALIDATE_EMAIL)||strlen($recipientName)>160||strlen($recipientEmail)>190||strlen($organisation)>190||strlen($phone)>60||strlen($currency)!==3||!preg_match('/^[A-Z]{3}$/',$currency)||!preg_match('/^\d{1,3}(\.\d{1,2})?$/',$vatInput)||$vat<0||$vat>100||!preg_match('/^\d{1,12}(\.\d{1,2})?$/',$discountInput)||$discount<0||count($lineItems)<1||!$companyReady||strlen($intro)>20000||strlen($scope)>20000||strlen($assumptions)>10000||strlen($terms)>10000||($valid!==''&&!preg_match('/^\d{4}-\d{2}-\d{2}$/',$valid)))){
+        $error='Check the recipient details, proposal title, currency, VAT, discount and line items. Also complete the legal company details under Billing → Invoice settings.';
     }
     if($error===''){
         $subtotal=round($subtotal,2);
@@ -69,8 +71,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         $customerId=$lead&&$lead['customer_id']?(int)$lead['customer_id']:null;
         $validDb=$valid!==''?$valid:null;
         $productDb=$productId>0?$productId:null;
-        $settings=db()->query('SELECT legal_name,trading_name,company_registration_no,kra_pin,vat_pin,address,city,country,phone,email,website,mpesa_till_number,mpesa_till_name FROM platform_invoice_settings WHERE id=1')->fetch_assoc();
-        $companyJson=$settings?json_encode($settings,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE):null;
+        $companyJson=json_encode($companySettings,JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
         try{
             db()->begin_transaction();
             $stmt=db()->prepare('INSERT INTO platform_proposals(lead_id,customer_id,proposal_number,public_token,title,recipient_name,recipient_email,recipient_organisation,recipient_phone,company_details_json,introduction,scope_of_work,assumptions,terms,currency,subtotal,discount_amount,vat_rate,vat_amount,total_amount,valid_until,status,created_by) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
@@ -108,7 +109,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 }
 page_header('Create proposal');
 ?>
-<div class="eyebrow">Sales documents</div><h1 class="heading">Prepare systems proposal</h1><p class="sub">Create a customer-specific proposal with multiple priced items. Company details are copied from Billing → Invoice settings. You can review, print or email the proposal from your configured SmarterNow SMTP mailbox.</p>
+<div class="eyebrow">Sales documents</div><h1 class="heading">Prepare systems proposal</h1><p class="sub">Create a customer-specific proposal with multiple priced items. Complete the legal company profile under Billing → Invoice settings before creating proposals. You can review, print or email the proposal from your configured SmarterNow SMTP mailbox.</p>
 <?php if($error):?><div class="notice error"><?=e($error)?></div><?php endif;?>
 <div class="panel"><form method="post"><input type="hidden" name="csrf_token" value="<?=e(csrf_token())?>"><input type="hidden" name="lead_id" value="<?=$leadId?>">
 <div class="form-grid"><div class="wide"><label>Proposal title</label><input name="title" maxlength="240" required value="<?=e($lead?'Systems proposal for '.$lead['organisation']:'Systems implementation proposal')?>"></div>
