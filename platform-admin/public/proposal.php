@@ -9,9 +9,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  if($action==='send'){
   $st=db()->prepare('SELECT * FROM platform_proposals WHERE id=?');$st->bind_param('i',$id);$st->execute();$p=$st->get_result()->fetch_assoc();
   if(!$p){http_response_code(404);exit('Proposal not found.');}
+  elseif(!in_array($p['status'],['draft','sent'],true)){$error='Only draft or previously sent proposals can be emailed again.';}
   elseif(!filter_var($p['recipient_email'],FILTER_VALIDATE_EMAIL)){$error='A valid recipient email is required before sending.';}
   else{
-   $base=rtrim((string)getenv('SMARTNOW_ADMIN_PORTAL_URL'),'/');
    $publicUrl='https://smarternowhosting.co.ke/proposal-view.php?token='.rawurlencode($p['public_token']);
    $body="Dear ".$p['recipient_name'].",\n\nPlease find your SmarterNow systems proposal: ".$p['proposal_number']." - ".$p['title'].".\n\nProposal total: ".$p['currency'].' '.number_format((float)$p['total_amount'],2)."\nValid until: ".($p['valid_until']?:'As agreed')."\n\nView the proposal and respond securely here:\n".$publicUrl."\n\nRegards,\nSmarterNow Data Venture";
    $sent=platform_send_mail($p['recipient_email'],'Systems proposal '.$p['proposal_number'].' - '.$p['title'],$body,'SmarterNow Proposals');
