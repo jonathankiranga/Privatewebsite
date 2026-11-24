@@ -102,7 +102,7 @@ $selected = null;
 $messages = null;
 $activeAdmins = db()->query('SELECT id,display_name FROM admin_users WHERE is_active=1 ORDER BY display_name');
 if ($ticketId > 0) {
-    $stmt = db()->prepare('SELECT t.*,c.email AS customer_email,c.organisation_name,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id WHERE t.id=?');
+    $stmt = db()->prepare('SELECT t.*,c.email AS customer_email,c.organisation_name,p.name AS product_name,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN platform_products p ON p.id=t.product_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id WHERE t.id=?');
     $stmt->bind_param('i', $ticketId);
     $stmt->execute();
     $selected = $stmt->get_result()->fetch_assoc() ?: null;
@@ -116,24 +116,24 @@ if ($ticketId > 0) {
 $statusFilter = (string)($_GET['status'] ?? '');
 $validFilters = ['open','in_progress','waiting_customer','resolved','closed'];
 if (in_array($statusFilter, $validFilters, true)) {
-    $stmt = db()->prepare('SELECT t.id,t.subject,t.ticket_type,t.status,t.priority,t.created_at,COALESCE(c.email,t.requester_email) AS requester,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id WHERE t.status=? ORDER BY FIELD(t.priority,"urgent","high","normal","low"),t.updated_at DESC LIMIT 200');
+    $stmt = db()->prepare('SELECT t.id,t.subject,t.ticket_type,t.status,t.priority,t.created_at,COALESCE(c.email,t.requester_email) AS requester,p.name AS product_name,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN platform_products p ON p.id=t.product_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id WHERE t.status=? ORDER BY FIELD(t.priority,"urgent","high","normal","low"),t.updated_at DESC LIMIT 200');
     $stmt->bind_param('s', $statusFilter);
     $stmt->execute();
     $tickets = $stmt->get_result();
 } else {
-    $tickets = db()->query('SELECT t.id,t.subject,t.ticket_type,t.status,t.priority,t.created_at,COALESCE(c.email,t.requester_email) AS requester,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id ORDER BY FIELD(t.priority,"urgent","high","normal","low"),t.updated_at DESC LIMIT 200');
+    $tickets = db()->query('SELECT t.id,t.subject,t.ticket_type,t.status,t.priority,t.created_at,COALESCE(c.email,t.requester_email) AS requester,p.name AS product_name,a.display_name AS assigned_admin_name FROM platform_support_tickets t LEFT JOIN platform_customers c ON c.id=t.customer_id LEFT JOIN platform_products p ON p.id=t.product_id LEFT JOIN admin_users a ON a.id=t.assigned_admin_id ORDER BY FIELD(t.priority,"urgent","high","normal","low"),t.updated_at DESC LIMIT 200');
 }
 page_header('Support tickets');
 ?>
 <div class="eyebrow">Customer service</div><h1 class="heading">Support tickets</h1><p class="sub">Review support requests, bug reports and feature suggestions. Replies are recorded in each ticket's history.</p>
 <?php if ($notice): ?><div class="notice"><?= e($notice) ?></div><?php endif; ?><?php if ($error): ?><div class="notice error"><?= e($error) ?></div><?php endif; ?>
 <div class="panel"><div class="actions" style="justify-content:space-between"><h2>Ticket queue</h2><form method="get" class="actions" style="margin:0"><select name="status" style="width:190px"><option value="">All statuses</option><?php foreach (['open'=>'Open','in_progress'=>'In progress','waiting_customer'=>'Waiting for customer','resolved'=>'Resolved','closed'=>'Closed'] as $v=>$label): ?><option value="<?= e($v) ?>" <?= $statusFilter===$v?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select><button class="btn secondary">Filter</button></form></div>
-<table><thead><tr><th>Ticket</th><th>Requester</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Created</th></tr></thead><tbody>
-<?php if ($tickets->num_rows): while ($t=$tickets->fetch_assoc()): ?><tr><td><a href="tickets.php?ticket=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?> · <?= e($t['subject']) ?></a></td><td><?= e($t['requester'] ?: 'Unlinked requester') ?></td><td><?= e(str_replace('_',' ',ucfirst($t['ticket_type']))) ?></td><td><?= e(ucfirst($t['priority'])) ?></td><td><?= e(str_replace('_',' ',ucfirst($t['status']))) ?></td><td><?= e($t['assigned_admin_name'] ?: 'Unassigned') ?></td><td><?= e($t['created_at']) ?></td></tr><?php endwhile; else: ?><tr><td colspan="7" class="empty">No tickets found.</td></tr><?php endif; ?>
+<table><thead><tr><th>Ticket</th><th>Requester</th><th>Product</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned to</th><th>Created</th></tr></thead><tbody>
+<?php if ($tickets->num_rows): while ($t=$tickets->fetch_assoc()): ?><tr><td><a href="tickets.php?ticket=<?= (int)$t['id'] ?>">#<?= (int)$t['id'] ?> · <?= e($t['subject']) ?></a></td><td><?= e($t['requester'] ?: 'Unlinked requester') ?></td><td><?= e($t['product_name'] ?: '—') ?></td><td><?= e(str_replace('_',' ',ucfirst($t['ticket_type']))) ?></td><td><?= e(ucfirst($t['priority'])) ?></td><td><?= e(str_replace('_',' ',ucfirst($t['status']))) ?></td><td><?= e($t['assigned_admin_name'] ?: 'Unassigned') ?></td><td><?= e($t['created_at']) ?></td></tr><?php endwhile; else: ?><tr><td colspan="8" class="empty">No tickets found.</td></tr><?php endif; ?>
 </tbody></table></div>
 <?php if ($selected): ?>
 <div class="panel"><div class="actions" style="justify-content:space-between"><h2>Ticket #<?= (int)$selected['id'] ?> — <?= e($selected['subject']) ?></h2><a class="btn secondary" href="tickets.php">Close detail</a></div>
-<p class="label">Requester: <?= e($selected['customer_email'] ?: $selected['requester_email'] ?: 'Not supplied') ?> · Organisation: <?= e($selected['organisation_name'] ?: '—') ?></p>
+<p class="label">Requester: <?= e($selected['customer_email'] ?: $selected['requester_email'] ?: 'Not supplied') ?> · Organisation: <?= e($selected['organisation_name'] ?: '—') ?> · Product: <?= e($selected['product_name'] ?: '—') ?></p>
 <p><?= nl2br(e($selected['description'] ?: 'No original description was recorded.')) ?></p>
 <form method="post"><input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="update"><input type="hidden" name="ticket_id" value="<?= (int)$selected['id'] ?>">
 <div class="form-grid"><div><label>Status</label><select name="status"><?php foreach (['open'=>'Open','in_progress'=>'In progress','waiting_customer'=>'Waiting for customer','resolved'=>'Resolved','closed'=>'Closed'] as $v=>$label): ?><option value="<?= e($v) ?>" <?= $selected['status']===$v?'selected':'' ?>><?= e($label) ?></option><?php endforeach; ?></select></div>
