@@ -39,6 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET password_hash=? WHERE id=?');
             $stmt->bind_param('si', $hash, $customer['account_id']);
             $stmt->execute();
+            $revoke = customer_db()->prepare('DELETE FROM platform_customer_remember_tokens WHERE account_id=?');
+            $revoke->bind_param('i', $customer['account_id']);
+            $revoke->execute();
+            setcookie('SMARTNOW_CUSTOMER_REMEMBER', '', ['expires'=>time()-3600,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);
             $stmt = customer_db()->prepare('SELECT updated_at FROM platform_customer_accounts WHERE id=?');
             $stmt->bind_param('i', $customer['account_id']);
             $stmt->execute();
