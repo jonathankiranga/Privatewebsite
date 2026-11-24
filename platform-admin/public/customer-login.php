@@ -21,7 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $account = $stmt->get_result()->fetch_assoc();
     $validLogin = $attemptCount < 10 && $account && password_verify($password, $account['password_hash']);
     if ($validLogin && $account['email_verified_at'] && !in_array($account['status'], ['suspended','closed'], true)) {
-        session_regenerate_id(true);
         customer_establish_login($account, !empty($_POST['remember_me']));
         $id = (int)$account['id'];
         $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET last_login_at=NOW(),updated_at=updated_at WHERE id=?');
