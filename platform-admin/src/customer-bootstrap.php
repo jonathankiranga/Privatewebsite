@@ -25,6 +25,10 @@ ini_set('session.cookie_secure', '1');
 ini_set('session.cookie_httponly', '1');
 ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.cookie_path', '/');
+// PHP's default session garbage-collection lifetime is commonly 24 minutes.
+// Customer sessions may remain server-side for 30 days; the remember token below
+// is the durable credential and is independently validated against the database.
+ini_set('session.gc_maxlifetime', '2592000');
 
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Pragma: no-cache');
@@ -117,6 +121,55 @@ function customer_current(): ?array
 {
     return isset($_SESSION['customer']) && is_array($_SESSION['customer']) ? $_SESSION['customer'] : null;
 }
+function customer_issue_remember_token(int $accountId): void
+{
+    $db = customer_db();
+    $raw = bin2hex(random_bytes(32));
+    $hash = hash('sha256', $raw);
+    $stmt = $db->prepare('INSERT INTO platform_customer_remember_tokens (account_id,token_hash,expires_at) VALUES (?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 30 DAY))');
+    $stmt->bind_param('is', $accountId, $hash);
+    $stmt->execute();
+    setcookie('SMARTNOW_CUSTOMER_REMEMBER', $raw, [
+        'expires' => time() + 2592000,
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
+function customer_establish_login(array $account, bool $remember = false): void
+{
+    session_regenerate_id(true);
+    $_SESSION['customer'] = [
+        'account_id'=>(int)$account['id'],
+        'account_updated_at'=>$account['updated_at'],
+        'customer_id'=>(int)$account['customer_id'],
+        'email'=>$account['email'],
+        'contact_name'=>$account['contact_name'],
+        'organisation_name'=>$account['organisation_name']
+    ];
+    $_SESSION['customer_last_activity'] = time();
+    if ($remember) customer_issue_remember_token((int)$account['id']);
+}
+function customer_restore_remembered_login(): void
+{
+    if (customer_current() || empty($_COOKIE['SMARTNOW_CUSTOMER_REMEMBER'])) return;
+    $raw = (string)$_COOKIE['SMARTNOW_CUSTOMER_REMEMBER'];
+    if (!preg_match('/^[a-f0-9]{64}$/', $raw)) return;
+    $hash = hash('sha256', $raw);
+    $stmt = customer_db()->prepare('SELECT t.id AS token_id,a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_remember_tokens t INNER JOIN platform_customer_accounts a ON a.id=t.account_id INNER JOIN platform_customers c ON c.id=a.customer_id WHERE t.token_hash=? AND t.expires_at>UTC_TIMESTAMP() LIMIT 1');
+    $stmt->bind_param('s', $hash);
+    $stmt->execute();
+    $account = $stmt->get_result()->fetch_assoc();
+    if (!$account || !$account['email_verified_at'] || in_array($account['status'], ['suspended','closed'], true)) {
+        setcookie('SMARTNOW_CUSTOMER_REMEMBER', '', ['expires'=>time()-3600,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);
+        return;
+    }
+    $delete = customer_db()->prepare('DELETE FROM platform_customer_remember_tokens WHERE id=?');
+    $delete->bind_param('i', $account['token_id']);
+    $delete->execute();
+    customer_establish_login($account, true);
+}
 function require_customer(): void
 {
     $session = customer_current();
@@ -140,3 +193,6 @@ function require_customer(): void
         'organisation_name'=>$row['organisation_name']
     ];
 }
+
+// Restore a validated customer login after the browser session cookie is gone.
+customer_restore_remembered_login();
