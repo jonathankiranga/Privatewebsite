@@ -62,6 +62,8 @@ if (!$clientId || !$clientSecret || !$portal || strtolower((string)parse_url($po
 }
 $redirectUri = $portal.'/customer-oauth.php?provider='.rawurlencode($provider);
 
+if (isset($_GET['error'])) customer_oauth_fail();
+
 if (!isset($_GET['code'])) {
     if (customer_current()) customer_redirect('customer-dashboard.php');
     $state = bin2hex(random_bytes(32));
