@@ -14,7 +14,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
    try{$lock=db()->prepare('SELECT total_amount,amount_paid,balance_due,status FROM platform_invoices WHERE id=? FOR UPDATE');$lock->bind_param('i',$invoiceId);$lock->execute();$cur=$lock->get_result()->fetch_assoc();
     if(!$cur||$cur['status']==='void')throw new RuntimeException('Payments cannot be recorded against a missing or void invoice.');
     if($amount>(float)$cur['balance_due']+0.001)throw new RuntimeException('The payment exceeds the outstanding balance.');
-    $adminId=(int)current_admin()['id'];$p=db()->prepare('INSERT INTO platform_invoice_payments(invoice_id,payment_date,amount,method,reference,notes,recorded_by) VALUES(?,?,?,?,?,?,?)');$p->bind_param('isdsssi',$invoiceId,$paymentDate,$amount,$method,$reference,$notes,$adminId);$p->execute();
+    $adminId=(int)current_admin()['id'];$p=db()->prepare('INSERT INTO platform_invoice_payments(invoice_id,payment_date,amount,method,reference,notes,recorded_by) VALUES(?,?,?,?,?,?,?)');$p->bind_param('isdsssi',$invoiceId,$paymentDate,$amount,$method,$reference,$notes,$adminId);$p->execute();$paymentId=(int)db()->insert_id;$receiptNumber='RCT-'.date('Y',strtotime($paymentDate)).'-'.str_pad((string)$paymentId,8,'0',STR_PAD_LEFT);$receiptUpdate=db()->prepare('UPDATE platform_invoice_payments SET receipt_number=? WHERE id=?');$receiptUpdate->bind_param('si',$receiptNumber,$paymentId);$receiptUpdate->execute();
     $paid=round((float)$cur['amount_paid']+$amount,2);$balance=round((float)$cur['total_amount']-$paid,2);$status=$balance<=0?'paid':'part_paid';$u=db()->prepare('UPDATE platform_invoices SET amount_paid=?,balance_due=?,status=? WHERE id=?');$u->bind_param('ddsi',$paid,$balance,$status,$invoiceId);$u->execute();
     audit_event('invoice.payment_recorded','invoice',$invoiceId,['amount'=>$amount,'method'=>$method,'reference'=>$reference]);db()->commit();redirect('invoice.php?id='.$invoiceId.'&payment_saved=1');
    }catch(Throwable $ex){db()->rollback();$error=$ex instanceof RuntimeException?$ex->getMessage():'The payment could not be recorded.';if(!($ex instanceof RuntimeException))error_log('Invoice payment failed: '.$ex->getMessage());}
@@ -31,20 +31,20 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
     $companyDetails=json_decode($payment['company_details_json'],true)?:[];$customerDetails=json_decode($payment['customer_details_json'],true)?:[];
     $receiptBalance=max(0,round((float)$payment['total_amount']-$paidToDate,2));
     $receiptSubject='Payment receipt '.$payment['receipt_number'].' · '.$payment['invoice_number'];
-    $receiptBody="PAYMENT RECEIPT\\n".
-     (($companyDetails['trading_name']??'')?:($companyDetails['legal_name']??'Company'))."\\n".
-     "Receipt number: ".$payment['receipt_number']."\\n".
-     "Invoice number: ".$payment['invoice_number']."\\n".
-     "Customer: ".(($customerDetails['organisation_name']??'')?:($customerDetails['contact_name']??'Customer'))."\\n".
-     "Payment date: ".$payment['payment_date']."\\n".
-     "Payment method: ".strtoupper($payment['method'])."\\n".
-     "Transaction reference: ".(($payment['reference']??'')?:'—')."\\n".
-     "Amount received: KES ".number_format((float)$payment['amount'],2)."\\n".
-     "Invoice total: KES ".number_format((float)$payment['total_amount'],2)."\\n".
-     "Total received to date: KES ".number_format($paidToDate,2)."\\n".
-     "Balance remaining after this payment: KES ".number_format($receiptBalance,2)."\\n".
-     "Notes: ".(($payment['notes']??'')?:'—')."\\n\\n".
-     "Thank you for your payment.\\n".
+    $receiptBody="PAYMENT RECEIPT\n".
+     (($companyDetails['trading_name']??'')?:($companyDetails['legal_name']??'Company'))."\n".
+     "Receipt number: ".$payment['receipt_number']."\n".
+     "Invoice number: ".$payment['invoice_number']."\n".
+     "Customer: ".(($customerDetails['organisation_name']??'')?:($customerDetails['contact_name']??'Customer'))."\n".
+     "Payment date: ".$payment['payment_date']."\n".
+     "Payment method: ".strtoupper($payment['method'])."\n".
+     "Transaction reference: ".(($payment['reference']??'')?:'—')."\n".
+     "Amount received: KES ".number_format((float)$payment['amount'],2)."\n".
+     "Invoice total: KES ".number_format((float)$payment['total_amount'],2)."\n".
+     "Total received to date: KES ".number_format($paidToDate,2)."\n".
+     "Balance remaining after this payment: KES ".number_format($receiptBalance,2)."\n".
+     "Notes: ".(($payment['notes']??'')?:'—')."\n\n".
+     "Thank you for your payment.\n".
      (($companyDetails['email']??'')?'Contact: '.$companyDetails['email']:'');
     $sent=admin_send_mail($recipient,$receiptSubject,$receiptBody);
     $log=db()->prepare('INSERT INTO platform_invoice_receipt_email_log(payment_id,recipient_email,subject,sent_by,smtp_accepted) VALUES(?,?,?,?,?)');
@@ -56,7 +56,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  }elseif($action==='void'){
   $reason=trim((string)($_POST['void_reason']??''));$st=db()->prepare('SELECT status,amount_paid FROM platform_invoices WHERE id=?');$st->bind_param('i',$invoiceId);$st->execute();$cur=$st->get_result()->fetch_assoc();
   if(!$cur||$cur['status']==='void'||(float)$cur['amount_paid']>0||strlen($reason)<5||strlen($reason)>500)$error='Only unpaid invoices can be voided. Enter a reason of at least 5 characters.';
-  else{$u=db()->prepare("UPDATE platform_invoices SET status='void',notes=CONCAT(COALESCE(notes,''),CASE WHEN COALESCE(notes,'')='' THEN '' ELSE '\\n' END,'VOID: ',?) WHERE id=?");$u->bind_param('si',$reason,$invoiceId);$u->execute();audit_event('invoice.voided','invoice',$invoiceId,['reason'=>$reason]);redirect('invoice.php?id='.$invoiceId.'&voided=1');}
+  else{$u=db()->prepare("UPDATE platform_invoices SET status='void',notes=CONCAT(COALESCE(notes,''),CASE WHEN COALESCE(notes,'')='' THEN '' ELSE '\n' END,'VOID: ',?) WHERE id=?");$u->bind_param('si',$reason,$invoiceId);$u->execute();audit_event('invoice.voided','invoice',$invoiceId,['reason'=>$reason]);redirect('invoice.php?id='.$invoiceId.'&voided=1');}
  }
 }
 $st=db()->prepare('SELECT * FROM platform_invoices WHERE id=?');$st->bind_param('i',$invoiceId);$st->execute();$invoice=$st->get_result()->fetch_assoc();if(!$invoice){http_response_code(404);exit('Invoice not found.');}
