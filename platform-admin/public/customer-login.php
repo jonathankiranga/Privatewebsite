@@ -4,6 +4,7 @@ if (customer_current()) customer_redirect('customer-dashboard.php');
 $error = '';
 if (isset($_GET['verified'])) $error = 'Your email is verified. Sign in to continue.';
 if (isset($_GET['access'])) $error = 'This account is unavailable. Contact SmartNow support.';
+if (isset($_GET['social'])) $error = 'Social sign-in could not be completed. Use an existing verified customer email and check that the provider is configured.';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     customer_verify_csrf();
     $email = strtolower(trim((string)($_POST['email'] ?? '')));
