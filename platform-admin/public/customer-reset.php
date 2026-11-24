@@ -21,10 +21,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     else {
         $hash = hash('sha256', $token);
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = customer_db()->prepare('SELECT id FROM platform_customer_accounts WHERE password_reset_token_hash=? AND password_reset_expires_at>NOW() LIMIT 1');
+        $stmt->bind_param('s', $hash);
+        $stmt->execute();
+        $resetAccount = $stmt->get_result()->fetch_assoc();
         $stmt = customer_db()->prepare('UPDATE platform_customer_accounts SET password_hash=?,password_reset_token_hash=NULL,password_reset_expires_at=NULL WHERE password_reset_token_hash=? AND password_reset_expires_at>NOW()');
         $stmt->bind_param('ss', $passwordHash, $hash);
         $stmt->execute();
         $done = $stmt->affected_rows === 1;
+        if ($done && $resetAccount) {
+            $accountId = (int)$resetAccount['id'];
+            $revoke = customer_db()->prepare('DELETE FROM platform_customer_remember_tokens WHERE account_id=?');
+            $revoke->bind_param('i', $accountId);
+            $revoke->execute();
+        }
         $valid = false;
         if (!$done) $error = 'This password reset link is invalid or has expired.';
     }
