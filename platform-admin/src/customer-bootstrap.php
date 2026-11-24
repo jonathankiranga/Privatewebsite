@@ -149,7 +149,17 @@ function customer_establish_login(array $account, bool $remember = false): void
         'organisation_name'=>$account['organisation_name']
     ];
     $_SESSION['customer_last_activity'] = time();
-    if ($remember) customer_issue_remember_token((int)$account['id']);
+    if ($remember) {
+        customer_issue_remember_token((int)$account['id']);
+    } else {
+        if (!empty($_COOKIE['SMARTNOW_CUSTOMER_REMEMBER']) && preg_match('/^[a-f0-9]{64}$/', (string)$_COOKIE['SMARTNOW_CUSTOMER_REMEMBER'])) {
+            $oldHash = hash('sha256', (string)$_COOKIE['SMARTNOW_CUSTOMER_REMEMBER']);
+            $revoke = customer_db()->prepare('DELETE FROM platform_customer_remember_tokens WHERE token_hash=?');
+            $revoke->bind_param('s', $oldHash);
+            $revoke->execute();
+        }
+        setcookie('SMARTNOW_CUSTOMER_REMEMBER', '', ['expires'=>time()-3600,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);
+    }
 }
 function customer_restore_remembered_login(): void
 {
@@ -180,6 +190,13 @@ function require_customer(): void
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
     if (!$row || !$row['email_verified_at'] || in_array($row['status'], ['suspended','closed'], true) || empty($session['account_updated_at']) || $session['account_updated_at'] !== $row['updated_at']) {
+        if (!empty($_COOKIE['SMARTNOW_CUSTOMER_REMEMBER']) && preg_match('/^[a-f0-9]{64}$/', (string)$_COOKIE['SMARTNOW_CUSTOMER_REMEMBER'])) {
+            $rememberHash = hash('sha256', (string)$_COOKIE['SMARTNOW_CUSTOMER_REMEMBER']);
+            $revoke = customer_db()->prepare('DELETE FROM platform_customer_remember_tokens WHERE token_hash=?');
+            $revoke->bind_param('s', $rememberHash);
+            $revoke->execute();
+        }
+        setcookie('SMARTNOW_CUSTOMER_REMEMBER', '', ['expires'=>time()-3600,'path'=>'/','secure'=>true,'httponly'=>true,'samesite'=>'Lax']);
         $_SESSION = [];
         session_destroy();
         customer_redirect('customer-login.php?access=unavailable');
