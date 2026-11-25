@@ -83,5 +83,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="grid"><div><label for="password">Password (14+ characters)</label><input id="password" name="password" type="password" minlength="14" autocomplete="new-password" required></div><div><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="14" autocomplete="new-password" required></div></div>
 <button class="btn" type="submit">Create account</button></form>
 <div class="social-login" aria-label="Social sign-in"><a href="customer-oauth.php?provider=google">Continue with Google</a><a href="customer-oauth.php?provider=yahoo">Continue with Yahoo</a></div>
-<p class="social-note">Social sign-in is available for existing verified customer accounts. New accounts must be registered and email-verified first.</p>
+<p class="social-note">New customers can create an account with Google or Yahoo using a verified email address. Existing customer accounts are matched by email.</p>
 <div class="links">Already registered? <a href="customer-login.php">Sign in</a> · <a href="customer-resend-verification.php">Resend verification</a></div></div></div></body></html>

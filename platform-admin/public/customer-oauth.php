@@ -125,33 +125,99 @@ try {
     }
 
     $db = customer_db();
-    $stmt = $db->prepare('SELECT a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_identities i INNER JOIN platform_customer_accounts a ON a.id=i.account_id INNER JOIN platform_customers c ON c.id=a.customer_id WHERE i.provider=? AND i.provider_subject=? LIMIT 1');
-    $stmt->bind_param('ss', $provider, $subject);
-    $stmt->execute();
-    $account = $stmt->get_result()->fetch_assoc();
+    $displayName = trim((string)($profile['name'] ?? ''));
+    if ($displayName === '') {
+        $displayName = trim((string)($profile['given_name'] ?? '').' '.(string)($profile['family_name'] ?? ''));
+    }
+    if ($displayName === '') $displayName = strstr($email, '@', true) ?: 'Customer';
+    $displayName = substr($displayName, 0, 160);
 
-    if (!$account) {
-        // Link only to an already-existing, verified customer account with the
-        // exact verified provider email. Never auto-register from a social profile.
-        $stmt = $db->prepare('SELECT a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_accounts a INNER JOIN platform_customers c ON c.id=a.customer_id WHERE c.email=? AND a.email_verified_at IS NOT NULL LIMIT 1');
-        $stmt->bind_param('s', $email);
+    /*
+     * Provider-verified email is sufficient proof of mailbox ownership.
+     * Create or attach the customer record and provider identity atomically.
+     * A random password hash is stored because password_hash is NOT NULL;
+     * the random password itself is discarded and cannot be used to sign in.
+     */
+    $db->begin_transaction();
+    try {
+        $stmt = $db->prepare('SELECT a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_identities i INNER JOIN platform_customer_accounts a ON a.id=i.account_id INNER JOIN platform_customers c ON c.id=a.customer_id WHERE i.provider=? AND i.provider_subject=? LIMIT 1 FOR UPDATE');
+        $stmt->bind_param('ss', $provider, $subject);
         $stmt->execute();
         $account = $stmt->get_result()->fetch_assoc();
-        if (!$account) throw new RuntimeException('No verified customer account matches this social email.');
-        $accountId = (int)$account['id'];
-        $stmt = $db->prepare('INSERT INTO platform_customer_identities (account_id,provider,provider_subject,provider_email,last_login_at) VALUES (?,?,?,?,NOW())');
-        $stmt->bind_param('isss', $accountId, $provider, $subject, $email);
-        $stmt->execute();
-    } else {
-        $identityId = 0;
-        $stmt = $db->prepare('UPDATE platform_customer_identities SET provider_email=?,last_login_at=NOW() WHERE provider=? AND provider_subject=?');
-        $stmt->bind_param('sss', $email, $provider, $subject);
-        $stmt->execute();
+
+        if (!$account) {
+            $stmt = $db->prepare('SELECT id,status,contact_name,organisation_name FROM platform_customers WHERE email=? LIMIT 1 FOR UPDATE');
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $customer = $stmt->get_result()->fetch_assoc();
+
+            if ($customer && in_array($customer['status'], ['suspended', 'closed'], true)) {
+                throw new RuntimeException('The matching customer record is suspended or closed.');
+            }
+
+            if (!$customer) {
+                $status = 'lead';
+                $emptyPhone = '';
+                $emptyCountry = '';
+                $emptyOrganisation = '';
+                $stmt = $db->prepare('INSERT INTO platform_customers (email,contact_name,phone,country_code,organisation_name,status) VALUES (?,?,?,?,?,?)');
+                $stmt->bind_param('ssssss', $email, $displayName, $emptyPhone, $emptyCountry, $emptyOrganisation, $status);
+                $stmt->execute();
+                $customerId = (int)$db->insert_id;
+            } else {
+                $customerId = (int)$customer['id'];
+                if (trim((string)$customer['contact_name']) === '') {
+                    $stmt = $db->prepare('UPDATE platform_customers SET contact_name=? WHERE id=?');
+                    $stmt->bind_param('si', $displayName, $customerId);
+                    $stmt->execute();
+                }
+            }
+
+            $stmt = $db->prepare('SELECT id FROM platform_customer_accounts WHERE customer_id=? LIMIT 1 FOR UPDATE');
+            $stmt->bind_param('i', $customerId);
+            $stmt->execute();
+            $existingAccount = $stmt->get_result()->fetch_assoc();
+
+            if ($existingAccount) {
+                $accountId = (int)$existingAccount['id'];
+                // The provider has independently verified this exact email.
+                $stmt = $db->prepare('UPDATE platform_customer_accounts SET email_verified_at=COALESCE(email_verified_at,NOW()) WHERE id=?');
+                $stmt->bind_param('i', $accountId);
+                $stmt->execute();
+            } else {
+                $randomPassword = bin2hex(random_bytes(48));
+                $unusablePasswordHash = password_hash($randomPassword, PASSWORD_DEFAULT);
+                unset($randomPassword);
+                $stmt = $db->prepare('INSERT INTO platform_customer_accounts (customer_id,password_hash,email_verified_at) VALUES (?,?,NOW())');
+                $stmt->bind_param('is', $customerId, $unusablePasswordHash);
+                $stmt->execute();
+                $accountId = (int)$db->insert_id;
+            }
+
+            $stmt = $db->prepare('SELECT a.id,a.customer_id,a.email_verified_at,a.updated_at,c.email,c.contact_name,c.organisation_name,c.status FROM platform_customer_accounts a INNER JOIN platform_customers c ON c.id=a.customer_id WHERE a.id=? LIMIT 1');
+            $stmt->bind_param('i', $accountId);
+            $stmt->execute();
+            $account = $stmt->get_result()->fetch_assoc();
+            if (!$account) throw new RuntimeException('The customer account could not be loaded after registration.');
+
+            $stmt = $db->prepare('INSERT INTO platform_customer_identities (account_id,provider,provider_subject,provider_email,last_login_at) VALUES (?,?,?,?,NOW())');
+            $stmt->bind_param('isss', $accountId, $provider, $subject, $email);
+            $stmt->execute();
+        } else {
+            $stmt = $db->prepare('UPDATE platform_customer_identities SET provider_email=?,last_login_at=NOW() WHERE provider=? AND provider_subject=?');
+            $stmt->bind_param('sss', $email, $provider, $subject);
+            $stmt->execute();
+        }
+
+        if (!$account['email_verified_at'] || in_array($account['status'], ['suspended', 'closed'], true)) {
+            throw new RuntimeException('Customer account is unavailable.');
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollback();
+        throw $e;
     }
 
-    if (!$account['email_verified_at'] || in_array($account['status'], ['suspended','closed'], true)) {
-        throw new RuntimeException('Customer account is unavailable.');
-    }
     customer_establish_login($account, true);
     $accountId = (int)$account['id'];
     $stmt = $db->prepare('UPDATE platform_customer_accounts SET last_login_at=NOW() WHERE id=?');
